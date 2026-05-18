@@ -11,7 +11,9 @@ generation. Just TypeScript.
 ## Table of Contents
 
 - [How to use](#how-to-use)
-- [Relationship with Deepkit](#relationship-with-deepkit)
+- [Relationship to Deepkit](#relationship-to-deepkit)
+- [Changelog](#changelog)
+- [License](#license)
 
 ## How to use
 
@@ -23,10 +25,14 @@ npm install --save-dev @runtyped/type-compiler
 npm install --save @runtyped/type
 ```
 
-The postinstall script of 
+The postinstall script of `@runtyped/type-compiler` automatically patches
+the TypeScript compiler, adding the transforms that make reflected types
+available at runtime. To so manually run `npx runtyped-type-install`.
+
+The full power of reflected types is now at your disposal:
 
 ```typescript
-import { cast, validate, serialize, typeOf } from '@runtyped/type';
+import { is, cast, validate, serialize, typeOf } from '@runtyped/type';
 
 interface User {
   id: number;
@@ -54,7 +60,7 @@ serialize<User>(user);
 const type = typeOf<User>();
 ```
 
-## Relationship with [Deepkit]
+## Relationship to [Deepkit]
 
 This project started as a fork of the astounding [Deepkit] framework. 
 In January of 2026 Deepkit's author, Marc J. Schmidt, decided to make
@@ -93,6 +99,10 @@ is also on X as [@MarcJSchmidt](https://x.com/MarcJSchmidt) and on GitHub as
 [Deepkit]: https://github.com/marcj/deepkit
 [0336f66]: https://github.com/marcj/deepkit/commit/0336f6691be4fe0f79e8827762c2d41751d4021f
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a full list of changes.
+
 ## License
 
-MIT
+MIT (see [LICENSE](LICENSE))
