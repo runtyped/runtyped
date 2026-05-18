@@ -1,6 +1,6 @@
 {
   "name": "@runtyped/core",
-  "version": "1.0.19",
+  "version": "1.0.20-alpha.1",
   "description": "Runtyped core library",
   "type": "commonjs",
   "main": "./dist/cjs/index.js",
@@ -28,9 +28,8 @@
     "to-fast-properties": "^4.0.0"
   },
   "devDependencies": {
-    "@runtyped/bench": "^1.0.19",
-    "@runtyped/expect": "^1.0.19",
-    "@types/dot-prop": "~5.0.4"
+    "@runtyped/bench": "1.0.20-alpha.1",
+    "@runtyped/expect": "1.0.20-alpha.1"
   },
   "scripts": {
     "build": "echo '{\"type\": \"module\"}' > ./dist/esm/package.json"

@@ -1,6 +1,6 @@
 {
   "name": "@runtyped/type-spec",
-  "version": "1.0.19",
+  "version": "1.0.20-alpha.1",
   "description": "@runtyped/type bytecode spec",
   "type": "commonjs",
   "main": "./dist/cjs/index.js",
