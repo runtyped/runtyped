@@ -19,8 +19,8 @@
     }
   },
   "bin": {
-    "runtyped-compiler-debug": "./deepkit-compiler-debug.js",
-    "runtyped-type-install": "./deepkit-type-install.js"
+    "runtyped-compiler-debug": "deepkit-compiler-debug.js",
+    "runtyped-type-install": "deepkit-type-install.js"
   },
   "sideEffects": false,
   "publishConfig": {
@@ -30,7 +30,10 @@
     "build": "echo '{\"type\": \"module\"}' > ./dist/esm/package.json",
     "install": "rm -rf node_modules/typescript && node ./deepkit-type-install.js || exit 0"
   },
-  "repository": "https://github.com/runtyped/runtyped",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/runtyped/runtyped.git"
+  },
   "authors": [
     "Marc J. Schmidt <marc@marcjschmidt.de>",
     "Jacopo Scazzosi <jacopo@scazzosi.com>"

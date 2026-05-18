@@ -17,7 +17,10 @@
   "scripts": {
     "build": "echo '{\"type\": \"module\"}' > ./dist/esm/package.json"
   },
-  "repository": "https://github.com/runtyped/runtyped",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/runtyped/runtyped.git"
+  },
   "authors": [
     "Marc J. Schmidt <marc@marcjschmidt.de>",
     "Jacopo Scazzosi <jacopo@scazzosi.com>"
