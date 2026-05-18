@@ -1,0 +1,44 @@
+{
+  "name": "@runtyped/type",
+  "version": "1.0.19",
+  "description": "@runtyped/type, the fastest universal TypeScript serializer and validator with JIT engine for frontend, backend, http-transport, RPC, and database, with built-in validations, for Browser/NodeJS.",
+  "type": "commonjs",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/cjs/index.d.ts",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/esm/index.js"
+    }
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "echo '{\"type\": \"module\"}' > ./dist/esm/package.json"
+  },
+  "repository": "https://github.com/runtyped/runtyped",
+  "authors": [
+    "Marc J. Schmidt <marc@marcjschmidt.de>",
+    "Jacopo Scazzosi <jacopo@scazzosi.com>"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@runtyped/core": "^1.0.1"
+  },
+  "dependencies": {
+    "@runtyped/type-spec": "^1.0.19",
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "@runtyped/core": "^1.0.19",
+    "@runtyped/expect": "^1.0.19",
+    "@runtyped/type-compiler": "^1.0.19",
+    "@types/node": "^25.8.0",
+    "@typescript/vfs": "^1.6.4",
+    "lz-string": "^1.5.0"
+  }
+}

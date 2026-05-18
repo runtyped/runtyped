@@ -1,0 +1,23 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/bench/tsconfig.json"
+    },
+    {
+      "path": "./packages/core/tsconfig.json"
+    },
+    {
+      "path": "./packages/type/tsconfig.json"
+    },
+    {
+      "path": "./packages/type-compiler/tsconfig.json"
+    },
+    {
+      "path": "./packages/type-spec/tsconfig.json"
+    },
+    {
+      "path": "./packages/expect/tsconfig.json"
+    },
+  ]
+}

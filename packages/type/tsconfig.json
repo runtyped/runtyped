@@ -1,0 +1,30 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist/cjs",
+    "types": [
+      "node"
+    ],
+    "tsBuildInfoFile": ".cjs.tsbuildinfo"
+  },
+  "reflection": true,
+  "include": [
+    "src",
+    "index.ts",
+    "tests"
+  ],
+  "references": [
+    {
+      "path": "../type-spec/tsconfig.json"
+    },
+    {
+      "path": "../core/tsconfig.json"
+    },
+    {
+      "path": "../expect/tsconfig.json"
+    },
+    {
+      "path": "../type-compiler/tsconfig.json"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist/cjs",
+    "types": [
+      "lz-string",
+      "micromatch",
+      "node"
+    ],
+    "tsBuildInfoFile": ".cjs.tsbuildinfo"
+  },
+  "include": [
+    "src",
+    "tests",
+    "install-transformer.ts",
+    "compiler-debug.ts",
+    "index.ts"
+  ],
+  "references": [
+    {
+      "path": "../type-spec/tsconfig.json"
+    },
+    {
+      "path": "../expect/tsconfig.json"
+    }
+  ]
+}

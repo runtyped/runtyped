@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "target": "es2020",
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "declaration": true,
+    "composite": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "tsBuildInfoFile": ".cjs.tsbuildinfo",
+  }
+}

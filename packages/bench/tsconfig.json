@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "outDir": "./dist/cjs",
+    "types": [
+      "node"
+    ],
+    "tsBuildInfoFile": ".cjs.tsbuildinfo"
+  },
+  "reflection": true,
+  "include": [
+    "tests",
+    "index.ts"
+  ],
+  "references": []
+}

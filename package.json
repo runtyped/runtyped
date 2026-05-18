@@ -1,0 +1,34 @@
+{
+  "name": "root",
+  "repository": "https://github.com/runtyped/runtyped",
+  "authors": [
+    "Marc J. Schmidt <marc@marcjschmidt.de>",
+    "Jacopo Scazzosi <jacopo@scazzosi.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test 'packages/*/dist/cjs/tests/**/*.spec.js'",
+    "test:coverage": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test --experimental-test-coverage 'packages/*/dist/cjs/tests/**/*.spec.js'",
+    "build": "tsc --build tsconfig.json && tsc --build tsconfig.esm.json",
+    "build:esm": "tsc --build tsconfig.esm.json",
+    "tsc": "tsc --build",
+    "postinstall": "sh install-compiler.sh",
+    "tsc-watch": "tsc --build --watch tsconfig.json",
+    "tsc-watch:esm": "tsc --build --watch tsconfig.esm.json",
+    "clean:all": "npm run clean:dist && npm run clean:modules && npm run clean:lock",
+    "clean:modules": "rm -rf packages/*/node_modules; rm -rf node_modules",
+    "clean:lock": "rm -rf packages/*/package-lock.json; rm -rf package-lock.json",
+    "clean:dist": "rm -rf packages/*/dist && rm -rf packages/*/.*.tsbuildinfo"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">= 20.0.0"
+  }
+}
