@@ -9,6 +9,6 @@ All notable changes to this project will be documented in this file.
 - Removed all framework modules unrelated to runtime types.
 - Refactored tests to replace [`jest`](https://www.npmjs.com/package/jest)
   with Node's native test runner and [`expect`](https://www.npmjs.com/package/expect)
-  with an internal assertion library built on [`chai`](https://www.npmjs.com/package/chai)
-  reducing dependency count from 300+ to just 44 in total, 38 of which are
-  required at runtime. This includes all transitive dependencies.
+  with an internal assertion library built on [`chai`](https://www.npmjs.com/package/chai).
+  Doing so reduced dependency count from 300+ to just 41 in total, 37 of which
+  are required at runtime. These numbers include all transitive dependencies.
