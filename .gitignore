@@ -1,7 +1,6 @@
 .yarn
 node_modules
 .idea
-docs
 coverage
 packages/node
 packages/network
