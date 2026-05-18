@@ -1,23 +1,10 @@
 {
   "name": "@runtyped/type-compiler",
-  "version": "1.0.20-alpha.1",
+  "version": "1.0.20-alpha.2",
   "description": "@runtyped/type compiler/Typescript transformer",
   "type": "commonjs",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
-  "types": "./dist/cjs/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/cjs/index.d.ts",
-      "require": "./dist/cjs/index.js",
-      "default": "./dist/esm/index.js"
-    },
-    "./plugin": {
-      "types": "./dist/cjs/plugin.d.ts",
-      "require": "./dist/cjs/plugin.js",
-      "default": "./dist/esm/plugin.js"
-    }
-  },
   "bin": {
     "runtyped-compiler-debug": "deepkit-compiler-debug.js",
     "runtyped-type-install": "deepkit-type-install.js"
@@ -43,11 +30,11 @@
     "typescript": "*"
   },
   "devDependencies": {
-    "@runtyped/expect": "1.0.20-alpha.1",
+    "@runtyped/expect": "1.0.20-alpha.2",
     "@types/micromatch": "^4.0.10"
   },
   "dependencies": {
-    "@runtyped/type-spec": "1.0.20-alpha.1",
+    "@runtyped/type-spec": "1.0.20-alpha.2",
     "@marcj/ts-clone-node": "^2.2.0",
     "@rollup/pluginutils": "^5.3.0",
     "@typescript/vfs": "1.6.4",
