@@ -15,6 +15,16 @@ generation. Just TypeScript.
 
 ## How to use
 
+Install `@runtyped/type-compiler` as a dev dependency and `@runtyped/type`
+as a regular dependency:
+
+```bash
+npm install --save-dev @runtyped/type-compiler
+npm install --save @runtyped/type
+```
+
+The postinstall script of 
+
 ```typescript
 import { cast, validate, serialize, typeOf } from '@runtyped/type';
 
@@ -80,7 +90,7 @@ You can still find [Deepkit's original repository][Deepkit] on GitHub. Marc
 is also on X as [@MarcJSchmidt](https://x.com/MarcJSchmidt) and on GitHub as
 [@marcj](https://github.com/marcj), though inactive ever since Feb 2026.
 
-[Deepkit](https://github.com/marcj/deepkit)
+[Deepkit]: https://github.com/marcj/deepkit
 [0336f66]: https://github.com/marcj/deepkit/commit/0336f6691be4fe0f79e8827762c2d41751d4021f
 
 ## License
