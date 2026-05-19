@@ -27,7 +27,7 @@ npm install --save @runtyped/type
 
 The postinstall script of `@runtyped/type-compiler` automatically patches
 the TypeScript compiler, adding the transforms that make reflected types
-available at runtime. To so manually run `npx runtyped-type-install`.
+available at runtime. To do so manually run `npx runtyped-type-install`.
 
 The full power of reflected types is now at your disposal:
 
