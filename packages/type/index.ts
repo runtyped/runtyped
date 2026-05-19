@@ -27,6 +27,7 @@ export * from './src/type-serialization.js';
 export * from './src/registry.js';
 export * from './src/default.js';
 export * from './src/mixin.js';
+export * from './src/jsonschema/jsonschema.js';
 
 export * from './src/reflection/type.js';
 export { typeAnnotation as metaAnnotation } from './src/reflection/type.js';

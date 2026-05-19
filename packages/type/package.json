@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@runtyped/type-spec": "1.0.20-alpha.2",
+    "camelcase": "^9.0.0",
     "uuid": "^14.0.0"
   },
   "devDependencies": {

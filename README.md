@@ -32,7 +32,7 @@ available at runtime. To so manually run `npx runtyped-type-install`.
 The full power of reflected types is now at your disposal:
 
 ```typescript
-import { is, cast, validate, serialize, typeOf } from '@runtyped/type';
+import { is, cast, validate, serialize, typeOf, toJsonSchema } from '@runtyped/type';
 
 interface User {
   id: number;
@@ -58,6 +58,9 @@ serialize<User>(user);
 
 // Full runtime type reflection
 const type = typeOf<User>();
+
+// Convert type to JSON Schema
+const schema = toJsonSchema<User>();
 ```
 
 ## Relationship to [Deepkit]
