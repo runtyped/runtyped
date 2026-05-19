@@ -1,6 +1,6 @@
 {
   "name": "@runtyped/type-compiler",
-  "version": "1.0.20-alpha.2",
+  "version": "1.0.20-alpha.3",
   "description": "@runtyped/type compiler/Typescript transformer",
   "type": "commonjs",
   "main": "./dist/cjs/index.js",
@@ -30,11 +30,11 @@
     "typescript": "*"
   },
   "devDependencies": {
-    "@runtyped/expect": "1.0.20-alpha.2",
+    "@runtyped/expect": "1.0.20-alpha.3",
     "@types/micromatch": "^4.0.10"
   },
   "dependencies": {
-    "@runtyped/type-spec": "1.0.20-alpha.2",
+    "@runtyped/type-spec": "1.0.20-alpha.3",
     "@marcj/ts-clone-node": "^2.2.0",
     "@rollup/pluginutils": "^5.3.0",
     "@typescript/vfs": "1.6.4",
