@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-05-20] - `1.0.20-alpha.3`
+
+- Minor documentation updates.
+- Added `toJsonSchema<T>()`, bootstrapped from MIT-licensed
+  [deepkit-openapi](https://github.com/hanayashiki/deepkit-openapi)
+  at commit [55f0026](https://github.com/hanayashiki/deepkit-openapi/commit/55f0026a978a9098d93cef3f391e04f892f7ab66).
+
 ## [2026-05-18] - Bootstrapped from Deepkit
 
 - Bootstrapped by forking [Deepkit](https://github.com/marcj/deepkit) at commit 
