@@ -42,5 +42,6 @@
     "lz-string": "^1.5.0",
     "micromatch": "^4.0.8",
     "strip-json-comments": "^5.0.3"
-  }
+  },
+  "keywords": ["validation", "reflection", "runtime", "types", "runtyped", "compiler", "transform", "typescript"]
 }

@@ -36,5 +36,6 @@
     "@types/node": "^25.8.0",
     "@typescript/vfs": "^1.6.4",
     "lz-string": "^1.5.0"
-  }
+  },
+  "keywords": ["validation", "reflection", "runtime", "types", "runtyped", "typescript"]
 }
