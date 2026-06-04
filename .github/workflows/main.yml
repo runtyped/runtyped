@@ -6,7 +6,15 @@ on:
 
 jobs:
   unit-tests:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [22.x, 24.x, 26.x]
+        arch: [x64]
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} / Node ${{ matrix.node-version }} ${{ matrix.arch }}
+
     steps:
 
       - uses: actions/checkout@v6
