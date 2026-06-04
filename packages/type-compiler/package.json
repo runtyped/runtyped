@@ -6,8 +6,8 @@
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "bin": {
-    "runtyped-compiler-debug": "deepkit-compiler-debug.js",
-    "runtyped-type-install": "deepkit-type-install.js"
+    "runtyped-compiler-debug": "runtyped-compiler-debug.js",
+    "runtyped-type-install": "runtyped-type-install.js"
   },
   "sideEffects": false,
   "publishConfig": {
@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "echo '{\"type\": \"module\"}' > ./dist/esm/package.json",
-    "install": "rm -rf node_modules/typescript && node ./deepkit-type-install.js || exit 0"
+    "install": "rm -rf node_modules/typescript && node ./runtyped-type-install.js || exit 0"
   },
   "repository": {
     "type": "git",
