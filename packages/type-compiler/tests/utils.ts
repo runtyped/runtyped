@@ -31,7 +31,6 @@ export function transform(files: Record<string, string>, options: ts.CompilerOpt
         target: ts.ScriptTarget.ES2016,
         allowNonTsExtensions: true,
         module: ts.ModuleKind.CommonJS,
-        moduleResolution: ts.ModuleResolutionKind.NodeJs,
         experimentalDecorators: true,
         esModuleInterop: true,
         ...options
@@ -78,7 +77,6 @@ export function transpile(files: Record<string, string>, options: ts.CompilerOpt
         target: ts.ScriptTarget.ES2015,
         allowNonTsExtensions: true,
         module: ts.ModuleKind.CommonJS,
-        moduleResolution: ts.ModuleResolutionKind.NodeJs,
         experimentalDecorators: true,
         esModuleInterop: true,
         skipLibCheck: true,

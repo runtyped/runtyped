@@ -44,7 +44,6 @@ export function transpile<T extends string | Record<string, string>>(files: T, o
         lib: [],
         noLib: true,
         transpileOnly: true,
-        moduleResolution: ts.ModuleResolutionKind.NodeJs,
         experimentalDecorators: true,
         esModuleInterop: true,
         skipLibCheck: true,
