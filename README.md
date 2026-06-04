@@ -11,6 +11,7 @@ generation. Just TypeScript.
 ## Table of Contents
 
 - [How to use](#how-to-use)
+- [Documentation](#documentation)
 - [Relationship to Deepkit](#relationship-to-deepkit)
 - [Changelog](#changelog)
 - [License](#license)
@@ -62,6 +63,10 @@ const type = typeOf<User>();
 // Convert type to JSON Schema
 const schema = toJsonSchema<User>();
 ```
+
+## Documentation
+
+See [docs/00-index.md](docs/00-index.md).
 
 ## Relationship to [Deepkit]
 
