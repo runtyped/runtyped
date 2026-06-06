@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { toMatch, toMatchObject } from "./helpers";
+import { toMatch, toMatchObject } from "./helpers.js";
 
 
 export class Expect<T> {

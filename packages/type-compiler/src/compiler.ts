@@ -2989,7 +2989,7 @@ export class DeclarationTransformer extends ReflectionTransformer {
 let loaded = false;
 const cache = new Cache;
 
-export const transformer: CustomTransformerFactory = function runtypedTransformer(context) {
+export const transformer: CustomTransformerFactory = function runtypedTypeTransformer(context) {
     if (!loaded) {
         debug('@runtyped/type transformer loaded\n');
         loaded = true;

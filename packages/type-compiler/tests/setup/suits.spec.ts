@@ -5,6 +5,8 @@ import { TransformationContext } from 'typescript';
 import { ReflectionTransformer } from '../../src/compiler.js';
 import { resolve } from 'node:path';
 
+const __dirname = import.meta.dirname;
+
 function build(currentDir = process.cwd(), useConfig = 'tsconfig.json'): { [path: string]: string } {
     process.env.DEBUG = 'runtyped';
     const configFile = ts.findConfigFile(currentDir, ts.sys.fileExists, useConfig);

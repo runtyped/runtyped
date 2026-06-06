@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import { expect } from '@runtyped/expect';
-import { toJsonSchema } from '../src/jsonschema/jsonschema';
+import { toJsonSchema } from '../src/jsonschema/jsonschema.js';
 
 describe('toJsonSchema', () => {
 

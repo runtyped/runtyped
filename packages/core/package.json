@@ -2,9 +2,8 @@
   "name": "@runtyped/core",
   "version": "1.0.20-alpha.3",
   "description": "Runtyped core library",
-  "type": "commonjs",
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
+  "type": "module",
+  "main": "./dist/index.js",
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
@@ -25,8 +24,5 @@
   "devDependencies": {
     "@runtyped/bench": "1.0.20-alpha.3",
     "@runtyped/expect": "1.0.20-alpha.3"
-  },
-  "scripts": {
-    "build": "echo '{\"type\": \"module\"}' > ./dist/esm/package.json"
   }
 }

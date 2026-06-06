@@ -1,6 +1,6 @@
 
 import { test, describe } from 'node:test';
-import { toMatchObject } from '../src/helpers';
+import { toMatchObject } from '../src/helpers.js';
 import assert, { throws } from 'node:assert';
 
 describe('toMatchObject()', () => {

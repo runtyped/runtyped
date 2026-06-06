@@ -1,13 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist/cjs",
+    "outDir": "./dist",
     "types": [
       "lz-string",
       "micromatch",
       "node"
     ],
-    "tsBuildInfoFile": ".cjs.tsbuildinfo"
+    "tsBuildInfoFile": ".tsbuildinfo"
   },
   "include": [
     "src",

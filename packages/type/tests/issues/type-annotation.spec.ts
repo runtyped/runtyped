@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import { expect } from '@runtyped/expect';
-import { typeOf } from '../../src/reflection/reflection';
-import { assertType, MapName, ReflectionKind, typeAnnotation, validationAnnotation } from '../../src/reflection/type';
-import { cast, serialize } from '../../src/serializer-facade';
+import { typeOf } from '../../src/reflection/reflection.js';
+import { assertType, MapName, ReflectionKind, typeAnnotation, validationAnnotation } from '../../src/reflection/type.js';
+import { cast, serialize } from '../../src/serializer-facade.js';
 
 import { TypeAnnotation } from '@runtyped/core';
-import { MinLength } from '../../src/validator';
+import { MinLength } from '../../src/validator.js';
 
 test('Meta', () => {
     type T = string & TypeAnnotation<'foo', { foo: 1, bar: true }>;

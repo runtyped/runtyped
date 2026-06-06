@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { expect } from '@runtyped/expect';
-import { typeOf } from '../../src/reflection/reflection';
-import { typeAnnotation } from '../../src/reflection/type';
+import { typeOf } from '../../src/reflection/reflection.js';
+import { typeAnnotation } from '../../src/reflection/type.js';
 
 test('test', () => {
     type MyAnnotation = { __meta?: never & ['myAnnotation'] };

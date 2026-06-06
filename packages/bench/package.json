@@ -2,13 +2,9 @@
   "name": "@runtyped/bench",
   "version": "1.0.20-alpha.3",
   "description": "Runtyped Bench",
-  "type": "commonjs",
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
+  "type": "module",
+  "main": "./dist/index.js",
   "private": true,
-  "scripts": {
-    "build": "echo '{\"type\": \"module\"}' > ./dist/esm/package.json"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/runtyped/runtyped.git"

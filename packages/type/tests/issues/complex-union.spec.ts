@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import { expect } from '@runtyped/expect';
-import { cast } from '../../src/serializer-facade';
+import { cast } from '../../src/serializer-facade.js';
 import { is } from '../../src/typeguard.js';
 
 test('complex union', () => {

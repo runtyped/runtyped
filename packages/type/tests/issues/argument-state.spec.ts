@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { expect } from '@runtyped/expect';
-import { ReceiveType, resolveReceiveType } from '../../src/reflection/reflection';
-import { Type } from '../../src/reflection/type';
+import { ReceiveType, resolveReceiveType } from '../../src/reflection/reflection.js';
+import { Type } from '../../src/reflection/type.js';
 import { forwardTypeArguments } from '@runtyped/core';
 
 test('function default', () => {
