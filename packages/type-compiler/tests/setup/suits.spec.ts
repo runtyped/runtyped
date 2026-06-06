@@ -30,7 +30,7 @@ function build(currentDir = process.cwd(), useConfig = 'tsconfig.json'): { [path
 }
 
 test('suite1 base default', async () => {
-    const cwd = resolve(__dirname, '../../../../tests/setup/suite1');
+    const cwd = resolve(__dirname, '../../../tests/setup/suite1');
     const files = build(cwd);
     expect(files['file1']).toContain('WithTypes.__type');
     expect(files['backend/file3']).toContain('WithTypesBackend.__type');
@@ -39,7 +39,7 @@ test('suite1 base default', async () => {
 });
 
 test('suite1 base no-types', async () => {
-    const cwd = resolve(__dirname, '../../../../tests/setup/suite1');
+    const cwd = resolve(__dirname, '../../../tests/setup/suite1');
     const files = build(cwd, 'tsconfig.no-types.json');
     expect(files['file1']).toContain('WithTypes.__type');
     expect(files['backend/file3']).not.toContain('WithTypesBackend.__type');
@@ -48,13 +48,13 @@ test('suite1 base no-types', async () => {
 });
 
 test('suite1 frontend', async () => {
-    const cwd = resolve(__dirname, '../../../../tests/setup/suite1/frontend');
+    const cwd = resolve(__dirname, '../../../tests/setup/suite1/frontend');
     const files = build(cwd);
     expect(files.file2).not.toContain('WithoutTypesFrontend.__type');
 });
 
 test('suite1 backend', async () => {
-    const cwd = resolve(__dirname, '../../../../tests/setup/suite1/backend');
+    const cwd = resolve(__dirname, '../../../tests/setup/suite1/backend');
     const files = build(cwd);
     expect(files.file3).toContain('WithTypesBackend.__type');
 });
