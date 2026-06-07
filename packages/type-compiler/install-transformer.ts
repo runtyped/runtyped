@@ -38,19 +38,18 @@ function getCode(runtypedDistPath: string, id: string): [beforeFn: string, after
       try {
         runtypedTypeTransformer = require(${JSON.stringify(runtypedDistPath)});
       } catch (error) {
+        console.error(\`
+          ==================== @runtyped/type-compiler ====================
+
+              WARNING: failed to require() @runtyped/type-compiler.
+
+          The TypeScript compiler has been correctly patched but the patch
+          itself is unable to load the transformer module from the expected
+          path. Please report this issue to the Runtyped team.
+          =================================================================
+        \`);
       }
     }
-    console.log('runtypedTypeTransformer', runtypedTypeTransformer);
-    // import('@runtyped/type-compiler')
-    //   .catch((err) => {
-    //     return import(${JSON.stringify(runtypedDistPath)});
-    //   })
-    //   .then((_runtypedTypeTransformer) => {
-    //     runtypedTypeTransformer = _runtypedTypeTransformer;
-    //   })
-    //   .catch((err) => {
-    //     runtypedTypeTransformer = null;
-    //   });
   `;
   const withinFn = `
     //${getPatchId(id)}
