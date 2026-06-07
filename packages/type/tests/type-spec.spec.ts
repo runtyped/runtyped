@@ -338,7 +338,8 @@ test('relation 2', () => {
     {
         const user = new User('foo');
         user.teams.push(new Team('bar'));
-        expect(serializeToJson<User>(user)).toEqual(user);
+        // serializeToJson produces JSON-safe output (undefined → null), so use roundTrip for equality
+        expect(roundTrip<User>(serializeToJson<User>(user))).toEqual(roundTrip<User>(user));
         expect(roundTrip<User>(user)).toEqual(user);
     }
 
