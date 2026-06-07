@@ -29,30 +29,17 @@ function getPatchId(id: string): string {
     return 'runtyped_patch_' + id;
 }
 
-function getCode(runtypedDistPath: string, id: string): [beforeFn: string, afterFn: string] {
-  const beforeFn = `
+function getCode(runtypedDistPath: string, id: string): string {
+  const patchCode = `
+    //${getPatchId(id)}
     let runtypedTypeTransformer;
     try {
       runtypedTypeTransformer = require('@runtyped/type-compiler');
     } catch (error) {
       try {
         runtypedTypeTransformer = require(${JSON.stringify(runtypedDistPath)});
-      } catch (error) {
-        console.error(\`
-          ==================== @runtyped/type-compiler ====================
-
-              WARNING: failed to require() @runtyped/type-compiler.
-
-          The TypeScript compiler has been correctly patched but the patch
-          itself is unable to load the transformer module from the expected
-          path. Please report this issue to the Runtyped team.
-          =================================================================
-        \`);
-      }
+      } catch (error) { }
     }
-  `;
-  const withinFn = `
-    //${getPatchId(id)}
     if (runtypedTypeTransformer) {
       if (!customTransformers) customTransformers = {};
       if (!customTransformers.before) customTransformers.before = [];
@@ -74,10 +61,21 @@ function getCode(runtypedDistPath: string, id: string): [beforeFn: string, after
           customTransformers.afterDeclarations.push(runtypedTypeTransformer.declarationTransformer);
         }
       }
+    } else {
+      console.error(\`
+        ==================== @runtyped/type-compiler ====================
+
+            WARNING: failed to require() @runtyped/type-compiler.
+
+        The TypeScript compiler has been correctly patched but the patch
+        itself is unable to load the transformer module from the expected
+        path. Please report this issue to the Runtyped team.
+        =================================================================
+      \`);
     }
     //${getPatchId(id)}-end
   `;
-  return [ beforeFn, withinFn ];
+  return patchCode;
 }
 
 function isPatched(code: string, id: string) {
@@ -121,8 +119,8 @@ for (const fileName of paths) {
   }
 
   code = code.replace(find, function (a) {
-    const [beforeFn, withinFn] = getCode(runtypedDistPath, id);
-    return beforeFn + '\n' + a + '\n    ' + withinFn;
+    const patchCode = getCode(runtypedDistPath, id);
+    return a + '\n    ' + patchCode;
   });
 
   writeFileSync(file, code);
