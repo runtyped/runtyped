@@ -32,29 +32,29 @@ function build(currentDir = process.cwd(), useConfig = 'tsconfig.json'): { [path
 test('suite1 base default', async () => {
     const cwd = resolve(__dirname, '../../../tests/setup/suite1');
     const files = build(cwd);
-    expect(files['file1']).toContain('WithTypes.__type');
-    expect(files['backend/file3']).toContain('WithTypesBackend.__type');
+    expect(files['file1']).toContain(`static __type = ['name', 'WithTypes', '&3!5w"'];`);
+    expect(files['backend/file3']).toContain(`static __type = ['name', 'WithTypesBackend', '&3!5w"'];`);
     //frontend contains types because frontend/tsconfig.json is not picked.
-    expect(files['frontend/file2']).toContain('WithoutTypesFrontend.__type');
+    expect(files['frontend/file2']).toContain(`static __type = ['name', 'WithoutTypesFrontend', '&3!5w"'];`);
 });
 
 test('suite1 base no-types', async () => {
     const cwd = resolve(__dirname, '../../../tests/setup/suite1');
     const files = build(cwd, 'tsconfig.no-types.json');
-    expect(files['file1']).toContain('WithTypes.__type');
-    expect(files['backend/file3']).not.toContain('WithTypesBackend.__type');
+    expect(files['file1']).toContain('static __type');
+    expect(files['backend/file3']).not.toContain('static __type');
     //frontend contains types because frontend/tsconfig.json is not picked.
-    expect(files['frontend/file2']).not.toContain('WithoutTypesFrontend.__type');
+    expect(files['frontend/file2']).not.toContain('static __type');
 });
 
 test('suite1 frontend', async () => {
     const cwd = resolve(__dirname, '../../../tests/setup/suite1/frontend');
     const files = build(cwd);
-    expect(files.file2).not.toContain('WithoutTypesFrontend.__type');
+    expect(files.file2).not.toContain('static __type');
 });
 
 test('suite1 backend', async () => {
     const cwd = resolve(__dirname, '../../../tests/setup/suite1/backend');
     const files = build(cwd);
-    expect(files.file3).toContain('WithTypesBackend.__type');
+    expect(files.file3).toContain('static __type');
 });
