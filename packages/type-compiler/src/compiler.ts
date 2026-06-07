@@ -1417,7 +1417,8 @@ export class ReflectionTransformer implements CustomTransformer {
                     for (const member of narrowed.members) {
                         const name = getNameAsString(member.name);
                         if (name) {
-                            const has = members.some(v => getNameAsString(v.name) === name);
+                            const isStatic = hasModifier(member, SyntaxKind.StaticKeyword);
+                            const has = members.some(v => getNameAsString(v.name) === name && hasModifier(v, SyntaxKind.StaticKeyword) === isStatic);
                             if (has) continue;
                         }
                         members.push(member);
