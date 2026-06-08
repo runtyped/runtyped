@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [2026-06-08] - `1.0.20-alpha.4`
+
 - BREAKING: converted build to ESM-only, no more CJS (https://github.com/runtyped/runtyped/pull/2)
 - Updated `typescript` to 6.x branch and fixed related compatibility issues
 - Updated test targets to include Node 26.x

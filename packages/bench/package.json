@@ -1,6 +1,6 @@
 {
   "name": "@runtyped/bench",
-  "version": "1.0.20-alpha.3",
+  "version": "1.0.20-alpha.4",
   "description": "Runtyped Bench",
   "type": "module",
   "main": "./dist/index.js",
