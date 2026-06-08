@@ -1,6 +1,6 @@
 {
   "name": "@runtyped/type-spec",
-  "version": "1.0.20-alpha.4",
+  "version": "1.0.20-alpha.5",
   "description": "@runtyped/type bytecode spec",
   "type": "module",
   "main": "./dist/index.js",
