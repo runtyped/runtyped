@@ -5,8 +5,8 @@
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "runtyped-compiler-debug": "runtyped-compiler-debug.js",
-    "runtyped-type-install": "runtyped-type-install.js"
+    "runtyped-compiler-debug": "./dist/compiler-debug.js",
+    "runtyped-type-install": "./dist/install-transformer.js"
   },
   "sideEffects": false,
   "publishConfig": {

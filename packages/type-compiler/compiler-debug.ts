@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { deepkitType } from './src/plugin.js';
 import { readFileSync } from 'fs';
 
