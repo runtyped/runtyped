@@ -4,6 +4,10 @@ import { createFSBackedSystem, createVirtualCompilerHost, knownLibFilesForCompil
 import { ReflectionTransformer } from '../src/compiler.js';
 import { readFileSync } from 'fs';
 import { dirname, join } from 'path';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const __dirname = import.meta.dirname;
 
 const defaultLibLocation = dirname(require.resolve('typescript')) + '/'; //node_modules/typescript/lib/
 

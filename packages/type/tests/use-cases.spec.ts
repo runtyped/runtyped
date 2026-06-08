@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import { expect } from '@runtyped/expect';
-import { createSerializeFunction, executeTypeArgumentAsArray, SerializeFunction, serializer, TemplateState } from '../src/serializer';
-import { deserialize, serialize } from '../src/serializer-facade';
+import { createSerializeFunction, executeTypeArgumentAsArray, SerializeFunction, serializer, TemplateState } from '../src/serializer.js';
+import { deserialize, serialize } from '../src/serializer-facade.js';
 import { validate } from '../index.js';
-import { TypeClass } from '../src/reflection/type';
+import { TypeClass } from '../src/reflection/type.js';
 
 class MyIterable<T> implements Iterable<T> {
     items: T[] = [];

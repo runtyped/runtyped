@@ -98,3 +98,7 @@ export function removeStrings(code: string) {
     }
     return result;
 }
+
+export function removeExtraWhitespace(code: string): string {
+    return code.replace(/\s+/g, ' ').trim();
+}

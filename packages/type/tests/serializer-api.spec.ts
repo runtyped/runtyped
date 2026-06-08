@@ -13,7 +13,7 @@ import {
 import { ReflectionKind, stringifyResolvedType } from '../src/reflection/type.js';
 import { CompilerContext } from '@runtyped/core';
 import { cast, deserialize, serialize } from '../src/serializer-facade.js';
-import { ValidationError } from '../src/validator';
+import { ValidationError } from '../src/validator.js';
 
 test('remove guard for string', () => {
     //if the original value (before convert to string) is null, it should stay null

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { expect } from '@runtyped/expect';
-import { typeOf } from '../../src/reflection/reflection';
-import { assertType, findMember, ReflectionKind } from '../../src/reflection/type';
+import { typeOf } from '../../src/reflection/reflection.js';
+import { assertType, findMember, ReflectionKind } from '../../src/reflection/type.js';
 
 test('test', () => {
     class EmailService {

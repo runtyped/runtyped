@@ -907,9 +907,9 @@ test('embedded in super class', () => {
         thread?: Embedded<Thread, { prefix: '' }>;
     }
 
-    class Message extends ComposedMessage {
-        public readonly type: string = Message.type;
+  class Message extends ComposedMessage {
         public static readonly type = 'my-id';
+        public readonly type: string = Message.type;
 
         public routingKeys?: string[];
         public endpoint?: string;

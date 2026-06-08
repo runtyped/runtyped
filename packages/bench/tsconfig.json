@@ -2,11 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "noImplicitAny": false,
-    "outDir": "./dist/cjs",
+    "outDir": "./dist",
     "types": [
       "node"
     ],
-    "tsBuildInfoFile": ".cjs.tsbuildinfo"
+    "tsBuildInfoFile": ".tsbuildinfo"
   },
   "reflection": true,
   "include": [

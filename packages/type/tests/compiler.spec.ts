@@ -13,6 +13,10 @@ import { expectEqualType } from './utils.js';
 import { createSystem, createVirtualCompilerHost, knownLibFilesForCompilerOptions } from '@typescript/vfs';
 import { dirname, join } from 'path';
 import { readFileSync } from 'fs';
+import { createRequire } from 'module';
+
+const __dirname = import.meta.dirname;
+const require = createRequire(import.meta.url);
 
 Error.stackTraceLimit = 200;
 
@@ -1867,6 +1871,11 @@ test('emit typeName for type only import', () => {
         module: ModuleKind.CommonJS
     });
     const typeOf = typeOf2;
+    // TODO: this is required because eval() executes the generated code, which
+    //       is CJS code, within the local context, which is an ESM module. For
+    //       now we simply define an empty `exports` object to avoid `exports`
+    //       being undefined in the generated code.
+    const exports = {};
     expect(eval(js['app.js'])).toEqual({ kind: 1, typeName: "User" });
 });
 
@@ -1881,6 +1890,11 @@ test('emit typeName for named type only import', () => {
         module: ModuleKind.CommonJS
     });
     const typeOf = typeOf2;
+    // TODO: this is required because eval() executes the generated code, which
+    //       is CJS code, within the local context, which is an ESM module. For
+    //       now we simply define an empty `exports` object to avoid `exports`
+    //       being undefined in the generated code.
+    const exports = {};
     expect(eval(js['app.js'])).toEqual({ kind: 1, typeName: "User" });
 });
 

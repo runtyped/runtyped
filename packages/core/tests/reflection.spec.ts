@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import { expect } from '@runtyped/expect';
-import { extractMethodBody, extractParameters, removeStrings } from '../src/reflection.js';
+import { extractMethodBody, extractParameters, removeStrings, removeExtraWhitespace } from '../src/reflection.js';
 
 
 test('removeStrings', () => {
@@ -38,8 +38,19 @@ test('simple', () => {
         }
     }
 
-    const code = extractMethodBody(User.toString(), 'constructor');
-    expect(code.trim()).toBe('this.id=uuid();this.bla=;');
+    const code = User.toString();
+    expect(removeExtraWhitespace(code)).toBe(removeExtraWhitespace(`class User {
+        id = uuid();
+        username;
+        bla = 'constructor()';
+        static test = uuid();
+        constructor(nothing = '{') {
+        }
+        doSomething() {
+            this.username = 'asd';
+        }
+        static __type = ['id', function () { return uuid(); }, 'username', 'bla', function () { return 'constructor()'; }, 'test', function () { return uuid(); }, 'nothing', () => "{", 'constructor', 'doSomething', 'User', '&3!>"&3#8&3$>%!3&s>\\'P&2(>)"0*P$0+5w,'];
+    }`));
 });
 
 

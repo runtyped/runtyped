@@ -602,7 +602,10 @@ export class Processor {
                                     }
                                     case ReflectionKind.property:
                                     case ReflectionKind.method: {
-                                        const existing = t.types.findIndex(v => (v.kind === ReflectionKind.property || v.kind === ReflectionKind.method) && v.name === (member as TypeProperty | TypeMethod).name);
+                                    const existing = t.types.findIndex(v => (v.kind === ReflectionKind.property || v.kind === ReflectionKind.method)
+                                        && v.name === (member as TypeProperty | TypeMethod).name
+                                        && (v as TypeProperty).static === (member as TypeProperty).static
+                                    );
                                         if (existing !== -1) {
                                             //remove entry, since we replace it
                                             t.types.splice(existing, 1);

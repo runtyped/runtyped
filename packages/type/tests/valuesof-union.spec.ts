@@ -10,8 +10,8 @@
 
 import { test } from 'node:test';
 import { expect } from '@runtyped/expect';
-import { expectEqualType } from "./utils";
-import { typeOf, valuesOf } from "../src/reflection/reflection";
+import { expectEqualType } from "./utils.js";
+import { typeOf, valuesOf } from "../src/reflection/reflection.js";
 
 test('typeOf infers a simple union', () => {
     type t = 'a' | 'b';
