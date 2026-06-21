@@ -2,12 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2026-06-21] - `1.0.20`
+## [2026-06-21] - **`1.0.20`** - First stable release!
 
 - BREAKING: removed first-party rollup plugin, `compiler-debug` script and
   direct dependency on `@rollup/pluginutils`.
 - BREAKING: forces users to explicitly run the `runtyped-install-transformer`
   script rather than relying on NPM's script hooks.
+
+This marks the first stable release of Runtyped since the project was [forked
+from Deepkit](./README.md#relationship-to-deepkit). This release is primarily
+focused on decreasing long-term maintenance overheads, abandoning dual ESM-CJS
+builds and eliminating many dependencies. Secondary goals were compatibility
+with TypeScript 6.x and all current versions of both NPM and Node.js, which is
+now tested in the CI pipeline, and beginning the process of documenting how the
+type virtual machine works.
 
 ## [2026-06-08] - `1.0.20-alpha.4`
 
