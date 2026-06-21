@@ -1,6 +1,6 @@
 {
   "name": "@runtyped/type-compiler",
-  "version": "1.0.20-alpha.5",
+  "version": "1.0.20",
   "description": "The TypeScript transformer companion to @runtyped/type.",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,11 +24,11 @@
     "typescript": "*"
   },
   "devDependencies": {
-    "@runtyped/expect": "1.0.20-alpha.5",
+    "@runtyped/expect": "1.0.20",
     "@types/micromatch": "^4.0.10"
   },
   "dependencies": {
-    "@runtyped/type-spec": "1.0.20-alpha.5",
+    "@runtyped/type-spec": "1.0.20",
     "@marcj/ts-clone-node": "^2.2.0",
     "@typescript/vfs": "1.6.4",
     "get-tsconfig": "^4.14.0",

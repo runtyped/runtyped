@@ -1,6 +1,6 @@
 {
   "name": "@runtyped/core",
-  "version": "1.0.20-alpha.5",
+  "version": "1.0.20",
   "description": "Runtyped core library",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,7 +22,7 @@
     "to-fast-properties": "^4.0.0"
   },
   "devDependencies": {
-    "@runtyped/bench": "1.0.20-alpha.5",
-    "@runtyped/expect": "1.0.20-alpha.5"
+    "@runtyped/bench": "1.0.20",
+    "@runtyped/expect": "1.0.20"
   }
 }
