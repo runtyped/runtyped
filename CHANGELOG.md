@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [2026-06-21] - `1.0.20`
 
 - BREAKING: removed first-party rollup plugin, `compiler-debug` script and
   direct dependency on `@rollup/pluginutils`.
