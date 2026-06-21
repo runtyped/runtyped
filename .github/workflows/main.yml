@@ -24,7 +24,10 @@ jobs:
           node-version: '24'
 
       - name: Install
-        run: npm install && npm run postinstall
+        run: npm install
+
+      - name: Build @runtyped/type-compiler and patch the TypeScript compiler
+        run: ./install-compiler.sh
 
       - name: Build
         run: npm run build

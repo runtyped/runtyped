@@ -7,26 +7,22 @@
 
 ## Getting Started
 
-```shell
+```sh
+# Clone the repository.
 git clone https://github.com/runtyped/runtyped.git
 cd runtyped
+
+# Install all dependencies.
 npm install
-```
 
-Make sure the compiler is built first and injected to node_modules:
+# Build `@runtyped/type-compiler` first and patch the TypeScript compiler
+# with the provided transformer.
+./install-compiler.sh
 
-```shell
-npx runtyped-type-install
-```
-
-When installation is finished you can build the packages:
-
-```shell
+# Build the rest of the packages, which will surface type information at
+# run-time due to using the patched TypeScript compiler.
 npm run build
-```
 
-You can try running some tests
-
-```shell
-npm run test
+# Run tests.
+npm test
 ```

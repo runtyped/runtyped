@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 - BREAKING: removed first-party rollup plugin, `compiler-debug` script and
   direct dependency on `@rollup/pluginutils`.
+- BREAKING: forces users to explicitly run the `runtyped-install-transformer`
+  script rather than relying on NPM's script hooks.
 
 ## [2026-06-08] - `1.0.20-alpha.4`
 

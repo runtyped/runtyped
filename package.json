@@ -12,7 +12,6 @@
     "test:coverage": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test --experimental-test-coverage 'packages/*/dist/tests/**/*.spec.js'",
     "build": "tsc --build tsconfig.json",
     "tsc": "tsc --build tsconfig.json",
-    "postinstall": "sh install-compiler.sh",
     "tsc-watch": "tsc --build --watch tsconfig.json",
     "clean:all": "npm run clean:dist && npm run clean:modules && npm run clean:lock",
     "clean:modules": "rm -rf packages/*/node_modules; rm -rf node_modules",

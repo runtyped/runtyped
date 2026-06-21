@@ -1,18 +1,15 @@
 {
   "name": "@runtyped/type-compiler",
   "version": "1.0.20-alpha.5",
-  "description": "@runtyped/type compiler/Typescript transformer",
+  "description": "The TypeScript transformer companion to @runtyped/type.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "runtyped-type-install": "./dist/install-transformer.js"
+    "runtyped-install-transformer": "./dist/install-transformer.js"
   },
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
-  },
-  "scripts": {
-    "install": "rm -rf node_modules/typescript && node ./runtyped-type-install.js || exit 0"
   },
   "repository": {
     "type": "git",
