@@ -1482,7 +1482,7 @@ test('no runtime types', () => {
         property!: string;
     }
 
-    expect(() => reflect(MyModel)).toThrow('No valid runtime type for MyModel given');
+    expect(() => reflect(MyModel)).toThrow('No valid runtime type for function MyModel given');
     expect(reflectOrUndefined(MyModel)).toBe(undefined);
 });
 

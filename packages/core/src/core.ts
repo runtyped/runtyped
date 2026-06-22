@@ -103,21 +103,178 @@ export function getClassTypeFromInstance<T>(target: T): ClassType<T> {
     return (target as any)['constructor'] as ClassType<T>;
 }
 
+const MAX_STRING_LENGTH = 50;
+const MAX_OBJECT_KEYS = 3;
+const MAX_ARRAY_ITEMS = 3;
+
+/**
+ * Stringify a primitive value for inclusion in object/array representations.
+ * Keeps output compact - no type prefix.
+ */
+function stringifyPrimitive(value: unknown): string {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+
+    const type = typeof value;
+
+    switch (type) {
+        case 'boolean':
+        case 'number':
+            return String(value);
+        case 'bigint':
+            return `${value}n`;
+        case 'string': {
+            const str = value as string;
+            if (str.length > 20) {
+                return `"${str.slice(0, 17)}..."`;
+            }
+            return `"${str}"`;
+        }
+        case 'symbol':
+            return String(value);
+        case 'function':
+            return '[function]';
+        case 'object':
+            if (isArray(value)) return `[...]`;
+            if (value instanceof Date) return value.toISOString();
+            return '{...}';
+        default:
+            return String(value);
+    }
+}
+
 /**
  * Returns a human-readable string representation from the given value.
+ *
+ * @example
+ * ```typescript
+ * stringifyValueWithType(true)           // "boolean true"
+ * stringifyValueWithType("hello")        // 'string "hello"'
+ * stringifyValueWithType({a:1, b:2})     // "object {a: 1, b: 2}"
+ * stringifyValueWithType([1,2,3,4,5,6])  // "array [1, 2, 3, ...] (6 items)"
+ * ```
  */
-export function stringifyValueWithType(value: any, depth: number = 0): string {
-    if ('string' === typeof value) return `string(${value})`;
-    if ('number' === typeof value) return `number(${value})`;
-    if ('boolean' === typeof value) return `boolean(${value})`;
-    if ('bigint' === typeof value) return `bigint(${value})`;
-    if (isPlainObject(value)) return `object ${depth < 2 ? prettyPrintObject(value, depth) : ''}`;
-    if (isArray(value)) return `Array`;
-    if (isClass(value)) return `${getClassName(value)}`;
-    if (isObject(value)) return `${getClassName(getClassTypeFromInstance(value))} ${depth < 2 ? prettyPrintObject(value, depth) : ''}`;
-    if ('function' === typeof value) return `function ${value.name}`;
-    if (null === value) return `null`;
-    return 'undefined';
+export function stringifyValueWithType(value: unknown, seen: WeakSet<object> = new WeakSet()): string {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+
+    const type = typeof value;
+
+    switch (type) {
+        case 'boolean':
+            return `boolean ${value}`;
+
+        case 'number':
+            return `number ${value}`;
+
+        case 'bigint':
+            return `bigint ${value}n`;
+
+        case 'string': {
+            const str = value as string;
+            if (str.length > MAX_STRING_LENGTH) {
+                return `string "${str.slice(0, MAX_STRING_LENGTH - 3)}..." (truncated)`;
+            }
+            return `string "${str}"`;
+        }
+
+        case 'symbol':
+            return `symbol ${String(value)}`;
+
+        case 'function':
+            return (value as Function).name ? `function ${(value as Function).name}` : 'function';
+
+        case 'object': {
+            const obj = value as object;
+
+            // Check for circular references
+            if (seen.has(obj)) {
+                return 'object [circular]';
+            }
+            seen.add(obj);
+
+            try {
+                // Handle special object types
+                if (isArray(obj)) {
+                    const len = obj.length;
+                    if (len === 0) return 'array []';
+                    const items = obj.slice(0, MAX_ARRAY_ITEMS).map(item => stringifyPrimitive(item));
+                    if (len <= MAX_ARRAY_ITEMS) {
+                        return `array [${items.join(', ')}]`;
+                    }
+                    return `array [${items.join(', ')}, ...] (${len} items)`;
+                }
+
+                if (obj instanceof Date) {
+                    return `Date ${obj.toISOString()}`;
+                }
+
+                if (obj instanceof Set) {
+                    return `Set (${obj.size} items)`;
+                }
+
+                if (obj instanceof Map) {
+                    return `Map (${obj.size} entries)`;
+                }
+
+                if (obj instanceof RegExp) {
+                    return `RegExp ${obj.toString()}`;
+                }
+
+                if (obj instanceof Error) {
+                    return `Error ${obj.name}: ${obj.message}`;
+                }
+
+                // Handle typed arrays and ArrayBuffer
+                if (ArrayBuffer.isView(obj)) {
+                    return `${(obj as any).constructor.name} (${(obj as unknown as { length: number }).length || (obj as unknown as { byteLength: number }).byteLength} bytes)`;
+                }
+
+                if (obj instanceof ArrayBuffer) {
+                    return `ArrayBuffer (${obj.byteLength} bytes)`;
+                }
+
+                // Check if it's a class instance (not plain object)
+                if (isObject(obj) && !isPlainObject(obj)) {
+                    const className = getClassName(getClassTypeFromInstance(obj));
+                    const keys = Object.keys(obj);
+                    if (keys.length === 0) return `${className} {}`;
+                    const displayKeys = keys.slice(0, MAX_OBJECT_KEYS);
+                    const pairs = displayKeys.map(key => {
+                        const val = (obj as Record<string, unknown>)[key];
+                        return `${key}: ${stringifyPrimitive(val)}`;
+                    });
+                    if (keys.length <= MAX_OBJECT_KEYS) {
+                        return `${className} {${pairs.join(', ')}}`;
+                    }
+                    const remaining = keys.length - MAX_OBJECT_KEYS;
+                    return `${className} {${pairs.join(', ')}, ...} (${remaining} more keys)`;
+                }
+
+                // Plain object
+                const keys = Object.keys(obj);
+                if (keys.length === 0) return 'object {}';
+
+                const displayKeys = keys.slice(0, MAX_OBJECT_KEYS);
+                const pairs = displayKeys.map(key => {
+                    const val = (obj as Record<string, unknown>)[key];
+                    return `${key}: ${stringifyPrimitive(val)}`;
+                });
+
+                if (keys.length <= MAX_OBJECT_KEYS) {
+                    return `object {${pairs.join(', ')}}`;
+                }
+                const remaining = keys.length - MAX_OBJECT_KEYS;
+                return `object {${pairs.join(', ')}, ...} (${remaining} more keys)`;
+            } catch {
+                // Fallback for any object that throws during inspection
+                return 'object [unreadable]';
+            }
+        }
+
+        default:
+            return String(type);
+    }
 }
 
 /**
@@ -146,9 +303,9 @@ export function changeClass<T>(value: object, newClass: ClassType<T>): T {
 export function prettyPrintObject(object: object, depth: number = 0): string {
     const res: string[] = [];
     for (const i in object) {
-        res.push(i + ': ' + stringifyValueWithType((object as any)[i], depth + 1));
+        res.push(i + ': ' + stringifyPrimitive((object as any)[i]));
     }
-    return '{' + res.join(',') + '}';
+    return '{' + res.join(', ') + '}';
 }
 
 

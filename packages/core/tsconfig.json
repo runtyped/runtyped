@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "lib": [
       "es2020",
+      "es2021",
       "es2022.error"
     ],
     "tsBuildInfoFile": ".tsbuildinfo",
