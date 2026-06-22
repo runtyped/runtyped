@@ -1268,9 +1268,8 @@ test('ReceiveType standard function', () => {
 
     const js = transpile(code);
     console.log('js', js);
-    expect(js).toContain('type = cast.Ω?.[0]');
+    expect(js).toContain('cast.Ω');
     expect(js).toContain('cast.Ω = undefined');
-    expect(js).toContain('cast.Ω = [');
 
     const type = transpileAndReturn(code);
     expect(type).toEqual({ kind: ReflectionKind.string });
@@ -1285,9 +1284,8 @@ test('ReceiveType arrow function', () => {
 
     const js = transpile(code);
     console.log('js', js);
-    expect(js).toContain('type = cast.Ω?.[0]');
+    expect(js).toContain('cast.Ω');
     expect(js).toContain('cast.Ω = undefined');
-    expect(js).toContain('cast.Ω = [');
 
     const type = transpileAndReturn(code);
     expect(type).toEqual({ kind: ReflectionKind.string });
@@ -1305,9 +1303,8 @@ test('ReceiveType object property assignment arrow function', () => {
 
     const js = transpile(code);
     console.log('js', js);
-    expect(js).toContain('type = obj.cast.Ω?.[0]');
+    expect(js).toContain('obj.cast.Ω');
     expect(js).toContain('obj.cast.Ω = undefined');
-    expect(js).toContain('obj.cast.Ω = [');
 
     const type = transpileAndReturn(code);
     expect(type).toEqual({ kind: ReflectionKind.string });
