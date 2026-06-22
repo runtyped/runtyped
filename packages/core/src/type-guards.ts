@@ -172,7 +172,7 @@ export function isString(obj: any): obj is string {
 
 export function isConstructable(fn: any): boolean {
     try {
-        new new Proxy(fn, { construct: () => ({}) });
+        new new Proxy(fn, { construct: () => ({}) })();
         return true;
     } catch (err) {
         return false;

@@ -450,13 +450,23 @@ test('stringifyValueWithType', async () => {
         id = 1;
     }
 
-    expect(stringifyValueWithType(new Peter)).toBe(`Peter {id: number(1)}`);
-    expect(stringifyValueWithType({ id: 1 })).toBe(`object {id: number(1)}`);
-    expect(stringifyValueWithType('foo')).toBe(`string(foo)`);
-    expect(stringifyValueWithType(2)).toBe(`number(2)`);
-    expect(stringifyValueWithType(true)).toBe(`boolean(true)`);
-    expect(stringifyValueWithType(function Peter() {
-    })).toBe(`function Peter`);
+    expect(stringifyValueWithType(new Peter())).toBe(`Peter {id: 1}`);
+    expect(stringifyValueWithType({ id: 1 })).toBe(`object {id: 1}`);
+    expect(stringifyValueWithType('foo')).toBe(`string "foo"`);
+    expect(stringifyValueWithType(2)).toBe(`number 2`);
+    expect(stringifyValueWithType(true)).toBe(`boolean true`);
+    expect(stringifyValueWithType(function Peter() {})).toBe(`function Peter`);
+
+    // Additional tests for new format
+    expect(stringifyValueWithType(null)).toBe('null');
+    expect(stringifyValueWithType(undefined)).toBe('undefined');
+    expect(stringifyValueWithType(123n)).toBe('bigint 123n');
+    expect(stringifyValueWithType([1, 2, 3])).toBe('array [1, 2, 3]');
+    expect(stringifyValueWithType([1, 2, 3, 4, 5])).toBe('array [1, 2, 3, ...] (5 items)');
+    expect(stringifyValueWithType(new Date('2024-01-01T00:00:00.000Z'))).toBe('Date 2024-01-01T00:00:00.000Z');
+    expect(stringifyValueWithType(/test/gi)).toBe('RegExp /test/gi');
+    expect(stringifyValueWithType(new Set([1, 2]))).toBe('Set (2 items)');
+    expect(stringifyValueWithType(new Map([['a', 1]]))).toBe('Map (1 entries)');
 });
 
 test('getClassTypeFromInstance', async () => {
