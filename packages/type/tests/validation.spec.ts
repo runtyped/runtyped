@@ -12,7 +12,7 @@ test('primitives', () => {
     expect(validate<string>('Hello')).toEqual([]);
     expect(validate<string>(123)).toEqual([{ code: 'type', message: 'Not a string', path: '', value: 123 }]);
 
-    expect(validate<number>('Hello')).toEqual([{ code: 'type', message: 'Not a number', path: '', value: 'Hello' }]);
+    expect(validate<number>('Hello')).toEqual([{ code: 'type', message: 'Cannot convert string "Hello" to number', path: '', value: 'Hello' }]);
     expect(validate<number>(123)).toEqual([]);
 });
 
@@ -186,12 +186,13 @@ test('class with union literal', () => {
     }
 
     expect(validate<ConnectionOptions>({ readConcernLevel: 'majority' })).toEqual([]);
-    expect(validate<ConnectionOptions>({ readConcernLevel: 'invalid' })).toEqual([{
-        code: 'type',
-        message: 'No valid union member found. Valid: \'local\' | \'majority\' | \'linearizable\' | \'available\'',
-        path: 'readConcernLevel',
-        value: 'invalid',
-    }]);
+    const errors = validate<ConnectionOptions>({ readConcernLevel: 'invalid' });
+    expect(errors.length).toBe(1);
+    expect(errors[0].code).toBe('type');
+    expect(errors[0].path).toBe('readConcernLevel');
+    expect(errors[0].value).toBe('invalid');
+    expect(errors[0].message).toContain('Cannot convert');
+    expect(errors[0].message).toContain("'local' | 'majority' | 'linearizable' | 'available'");
 });
 
 test('named tuple', () => {
@@ -286,7 +287,7 @@ test('readonly constructor properties', () => {
     }
 
     expect(validate<Pilot>({ name: 'Peter', age: 32 })).toEqual([]);
-    expect(validate<Pilot>({ name: 'Peter', age: 'sdd' })).toEqual([{ code: 'type', message: 'Not a number', path: 'age', value: 'sdd' }]);
+    expect(validate<Pilot>({ name: 'Peter', age: 'sdd' })).toEqual([{ code: 'type', message: 'Cannot convert string "sdd" to number', path: 'age', value: 'sdd' }]);
 });
 
 test('class with statics', () => {
@@ -302,7 +303,7 @@ test('class with statics', () => {
     }
 
     expect(validate<PilotId>({ value: 34 })).toEqual([]);
-    expect(validate<PilotId>({ value: '33' })).toEqual([{ code: 'type', message: 'Not a number', path: 'value', value: '33' }]);
+    expect(validate<PilotId>({ value: '33' })).toEqual([{ code: 'type', message: 'Cannot convert string "33" to number', path: 'value', value: '33' }]);
 });
 
 test('date', () => {

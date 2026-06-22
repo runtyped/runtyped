@@ -209,12 +209,12 @@ export class Expect<T> {
     /**
      * Asserts that a function throws an error.
      */
-    toThrow(expected?: string | Error | Function): void {
-        if (typeof expected === 'undefined' || typeof expected === 'string') {
-            this.#wrap().to.throw(expected);
-        } else {
-            this.#wrap().to.throw(expected);
-        }
+    toThrow(expected?: string | Error | Function | RegExp): void {
+        this.#wrap().to.throw(expected as any);
+    }
+
+    toThrowError(expected?: string | Error | Function | RegExp): void {
+        this.toThrow(expected);
     }
 
 }

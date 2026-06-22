@@ -1,8 +1,9 @@
 import { DeepkitError, stringifyValueWithType } from '@runtyped/core';
+
 import { entity } from './decorator.js';
 import { ReceiveType } from './reflection/reflection.js';
-import { stringifyType, Type } from './reflection/type.js';
-import { serializer, Serializer } from './serializer.js';
+import { Type, stringifyType } from './reflection/type.js';
+import { Serializer, serializer } from './serializer/serializer.js';
 import { getValidatorFunction, is } from './typeguard.js';
 
 /**
@@ -13,8 +14,7 @@ export class ValidatorError {
         public readonly code: string,
         public readonly message: string,
         public readonly path?: string,
-    ) {
-    }
+    ) {}
 }
 
 /**
@@ -78,7 +78,7 @@ export class ValidationError extends DeepkitError {
         );
     }
 
-    static from(errors: { path: string, message: string, code?: string, value?: any }[]) {
+    static from(errors: { path: string; message: string; code?: string; value?: any }[]) {
         return new ValidationError(errors.map(v => new ValidationErrorItem(v.path, v.code || '', v.message, v.value)));
     }
 }
@@ -94,7 +94,10 @@ export function validate<T>(data: any, type?: ReceiveType<T>): ValidationErrorIt
     return errors;
 }
 
-export function validateFunction<T>(serializerToUse: Serializer = serializer, type?: ReceiveType<T>): (data: T) => ValidationErrorItem[] {
+export function validateFunction<T>(
+    serializerToUse: Serializer = serializer,
+    type?: ReceiveType<T>,
+): (data: T) => ValidationErrorItem[] {
     const fn = getValidatorFunction(serializerToUse, type);
     return (data: T) => {
         const errors: ValidationErrorItem[] = [];
