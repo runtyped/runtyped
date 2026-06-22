@@ -55,7 +55,7 @@ import { AbstractClassType, arrayRemoveItem, ClassType, getClassName, isArray, i
 import { Packed, resolvePacked, resolveRuntimeType } from './processor.js';
 import { NoTypeReceived } from '../utils.js';
 import { findCommonLiteral } from '../inheritance.js';
-import type { ValidateFunction } from '../validator.js';
+import type { ValidateFunction } from '../type-annotations.js';
 import { isWithDeferredDecorators } from '../decorator.js';
 import { SerializedTypes, serializeType } from '../type-serialization.js';
 

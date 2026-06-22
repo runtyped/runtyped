@@ -1,8 +1,9 @@
 import { test, mock } from 'node:test';
 import { expect } from '@runtyped/expect';
-import { Email, MaxLength, MinLength, Positive, Validate, validate, validates, ValidatorError } from '../src/validator.js';
-import { assert, is } from '../src/typeguard.js';
 import { AutoIncrement, Excluded, Group, integer, PrimaryKey, Type, Unique } from '../src/reflection/type.js';
+import { Email, MaxLength, MinLength, Positive, Validate } from '../src/type-annotations.js';
+import { validate, validates, ValidatorError } from '../src/validator.js';
+import { assert, is } from '../src/typeguard.js';
 import { t } from '../src/decorator.js';
 import { ReflectionClass, typeOf } from '../src/reflection/reflection.js';
 import { cast, castFunction, validatedDeserialize } from '../src/serializer-facade.js';

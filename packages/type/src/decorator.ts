@@ -9,12 +9,12 @@
  * You should have received a copy of the MIT License along with this program.
  */
 
-import { ClassDecoratorResult, createClassDecoratorContext, createPropertyDecoratorContext } from './decorator-builder.js';
-import { EntityData, ReceiveType, SerializerFn, TData } from './reflection/reflection.js';
-import { ClassType, isArray } from '@runtyped/core';
-import { IndexOptions } from './reflection/type.js';
-import type { ValidateFunction } from './validator.js';
+import { AbstractClassType, ClassType, isArray, isClass } from '@runtyped/core';
 import { typeSettings } from './core.js';
+import { ClassDecoratorResult, createClassDecoratorContext, createPropertyDecoratorContext } from './decorator-builder.js';
+import { resolveRuntimeType } from './reflection/processor.js';
+import { EntityData, ReceiveType, SerializerFn, TData } from './reflection/reflection.js';
+import type { IndexOptions, ValidateFunction } from './type-annotations.js';
 
 class TDecorator {
     t = new TData();
@@ -135,4 +135,10 @@ function addDeferredDecorator(data: any, target: any, property?: string, paramet
     if (!target) return;
     if (!target.__decorators) target.__decorators = [];
     target.__decorators.push({ target, property, parameterIndexOrDescriptor, data });
+}
+
+export function annotateClass<T>(clazz: ClassType | AbstractClassType, type?: ReceiveType<T>) {
+    (clazz as any).__type = isClass(type) ? (type as any).__type || [] : [];
+    type = resolveRuntimeType(type);
+    (clazz as any).__type.__type = type;
 }

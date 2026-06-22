@@ -13,8 +13,8 @@ import { test } from 'node:test';
 import { expect } from '@runtyped/expect';
 import { entity, t } from '../src/decorator.js';
 import { propertiesOf, reflect, ReflectionClass, ReflectionFunction, ReflectionMethod, typeOf, valuesOf } from '../src/reflection/reflection.js';
+import { annotateClass } from '../src/decorator.js';
 import {
-    annotateClass,
     assertType,
     AutoIncrement,
     autoIncrementAnnotation,

@@ -41,7 +41,7 @@ import { isExtendable } from '../src/reflection/extends.js';
 import { expectEqualType } from './utils.js';
 import { ClassType, TypeAnnotation } from '@runtyped/core';
 import { Partial } from '../src/changes.js';
-import { MaxLength, MinLength } from '../src/validator.js';
+import { MaxLength, MinLength } from '../src/type-annotations.js';
 
 //note: this needs to run in a strict TS mode to infer correctly in the IDE
 type Extends<A, B> = [A] extends [B] ? true : false;
@@ -1482,8 +1482,12 @@ test('no runtime types', () => {
         property!: string;
     }
 
-    expect(() => reflect(MyModel)).toThrow('No valid runtime type for function MyModel given');
-    expect(reflectOrUndefined(MyModel)).toBe(undefined);
+    // Classes without __type (e.g., @reflection never or external libraries) return TypeAny with typeName
+    // for graceful degradation instead of throwing
+    const type = reflect(MyModel);
+    expect(type.kind).toBe(ReflectionKind.any);
+    expect((type as any).typeName).toBe('MyModel');
+    expect(reflectOrUndefined(MyModel)).toEqual({ kind: ReflectionKind.any, typeName: 'MyModel' });
 });
 
 test('arrow function returns self reference', () => {
