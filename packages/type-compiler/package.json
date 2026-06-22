@@ -28,13 +28,23 @@
     "@types/micromatch": "^4.0.10"
   },
   "dependencies": {
-    "@runtyped/type-spec": "1.0.20",
     "@marcj/ts-clone-node": "^2.2.0",
+    "@rollup/pluginutils": "^5.4.0",
+    "@runtyped/type-spec": "1.0.20",
     "@typescript/vfs": "1.6.4",
     "get-tsconfig": "^4.14.0",
     "lz-string": "^1.5.0",
     "micromatch": "^4.0.8",
     "strip-json-comments": "^5.0.3"
   },
-  "keywords": ["validation", "reflection", "runtime", "types", "runtyped", "compiler", "transform", "typescript"]
+  "keywords": [
+    "validation",
+    "reflection",
+    "runtime",
+    "types",
+    "runtyped",
+    "compiler",
+    "transform",
+    "typescript"
+  ]
 }

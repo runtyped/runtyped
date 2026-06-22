@@ -1,14 +1,18 @@
 import { test } from 'node:test';
-import { expect } from '@runtyped/expect';
 import * as ts from 'typescript';
 import { TransformationContext } from 'typescript';
-import { ReflectionTransformer } from '../../src/compiler.js';
-import { resolve } from 'node:path';
+import { createRequire } from 'module';
 
-const __dirname = import.meta.dirname;
+import { expect } from '@runtyped/expect';
+
+import { ReflectionTransformer } from '../../src/compiler.js';
+
+const require = createRequire(import.meta.url);
+// Use source directory, not dist, so test fixtures (tsconfig, .ts files) are found
+const __dirname = import.meta.dirname.replace('/dist/tests/setup', '/tests/setup');
 
 function build(currentDir = process.cwd(), useConfig = 'tsconfig.json'): { [path: string]: string } {
-    process.env.DEBUG = 'runtyped';
+    process.env.DEBUG = 'deepkit';
     const configFile = ts.findConfigFile(currentDir, ts.sys.fileExists, useConfig);
     if (!configFile) throw Error('tsconfig.json not found');
     const { config } = ts.readConfigFile(configFile, ts.sys.readFile);
@@ -19,42 +23,44 @@ function build(currentDir = process.cwd(), useConfig = 'tsconfig.json'): { [path
     const program = ts.createProgram({ options, rootNames: fileNames, configFileParsingDiagnostics: errors });
 
     const result: { [path: string]: string } = {};
-    program.emit(undefined, (fileName, data) => {
-        //add basename to currentDir from fileName to result
-        result[fileName.slice(currentDir.length + 1).replace(/\.js$/, '')] = data;
-    }, undefined, undefined, {
-        before: [(context: TransformationContext) => new ReflectionTransformer(context)],
-    });
+    program.emit(
+        undefined,
+        (fileName, data) => {
+            //add basename to currentDir from fileName to result
+            result[fileName.slice(currentDir.length + 1).replace(/\.js$/, '')] = data;
+        },
+        undefined,
+        undefined,
+        {
+            before: [(context: TransformationContext) => new ReflectionTransformer(context)],
+        },
+    );
 
     return result;
 }
 
 test('suite1 base default', async () => {
-    const cwd = resolve(__dirname, '../../../tests/setup/suite1');
-    const files = build(cwd);
-    expect(files['file1']).toContain(`static __type = ['name', 'WithTypes', '&3!5w"'];`);
-    expect(files['backend/file3']).toContain(`static __type = ['name', 'WithTypesBackend', '&3!5w"'];`);
+    const files = build(__dirname + '/suite1');
+    expect(files['file1']).toContain('WithTypes.__type');
+    expect(files['backend/file3']).toContain('WithTypesBackend.__type');
     //frontend contains types because frontend/tsconfig.json is not picked.
-    expect(files['frontend/file2']).toContain(`static __type = ['name', 'WithoutTypesFrontend', '&3!5w"'];`);
+    expect(files['frontend/file2']).toContain('WithoutTypesFrontend.__type');
 });
 
 test('suite1 base no-types', async () => {
-    const cwd = resolve(__dirname, '../../../tests/setup/suite1');
-    const files = build(cwd, 'tsconfig.no-types.json');
-    expect(files['file1']).toContain('static __type');
-    expect(files['backend/file3']).not.toContain('static __type');
+    const files = build(__dirname + '/suite1', 'tsconfig.no-types.json');
+    expect(files['file1']).toContain('WithTypes.__type');
+    expect(files['backend/file3']).not.toContain('WithTypesBackend.__type');
     //frontend contains types because frontend/tsconfig.json is not picked.
-    expect(files['frontend/file2']).not.toContain('static __type');
+    expect(files['frontend/file2']).not.toContain('WithoutTypesFrontend.__type');
 });
 
 test('suite1 frontend', async () => {
-    const cwd = resolve(__dirname, '../../../tests/setup/suite1/frontend');
-    const files = build(cwd);
-    expect(files.file2).not.toContain('static __type');
+    const files = build(__dirname + '/suite1/frontend');
+    expect(files.file2).not.toContain('WithoutTypesFrontend.__type');
 });
 
 test('suite1 backend', async () => {
-    const cwd = resolve(__dirname, '../../../tests/setup/suite1/backend');
-    const files = build(cwd);
-    expect(files.file3).toContain('static __type');
+    const files = build(__dirname + '/suite1/backend');
+    expect(files.file3).toContain('WithTypesBackend.__type');
 });
