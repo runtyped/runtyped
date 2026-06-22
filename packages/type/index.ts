@@ -23,14 +23,15 @@ export * from './src/validators.js';
 export * from './src/snapshot.js';
 export * from './src/change-detector.js';
 export * from './src/path.js';
+export * from './src/type-annotations.js';
 export * from './src/type-serialization.js';
 export * from './src/registry.js';
 export * from './src/default.js';
 export * from './src/mixin.js';
+export * from './src/fast-date.js';
 export * from './src/jsonschema/jsonschema.js';
 
 export * from './src/reflection/type.js';
-export { typeAnnotation as metaAnnotation } from './src/reflection/type.js';
 
 export * from './src/reflection/processor.js';
 export * from './src/reflection/type.js';

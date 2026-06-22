@@ -38,7 +38,8 @@ import { createSerializeFunction, getSerializeFunction, NamingStrategy, Serializ
 import { cast, deserialize, patch, serialize } from '../src/serializer-facade.js';
 import { getClassName, TypeAnnotation } from '@runtyped/core';
 import { entity, t } from '../src/decorator.js';
-import { Alphanumeric, MaxLength, MinLength, ValidationError } from '../src/validator.js';
+import { Alphanumeric, MaxLength, MinLength } from '../src/type-annotations.js';
+import { ValidationError } from '../src/validator.js';
 import { StatEnginePowerUnit, StatWeightUnit } from './types.js';
 import { parametersToTuple } from '../src/reflection/extends.js';
 import { is } from '../src/typeguard.js';
