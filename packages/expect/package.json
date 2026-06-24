@@ -1,6 +1,6 @@
 {
   "name": "@runtyped/expect",
-  "version": "2.0.0-alpha.2",
+  "version": "2.0.0-alpha.3",
   "description": "@runtyped/expect, <todo>.",
   "type": "module",
   "main": "./dist/index.js",
