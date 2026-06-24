@@ -347,10 +347,10 @@ test('barrel file pattern: multiple re-exports from different modules', () => {
 
 // =============================================================================
 // CLASS AND VALUE RE-EXPORT TESTS
-// Classes use static __type property but also get __Ω symbols for re-exports
+// Classes use static __type property — they do NOT get __Ω re-exports
 // =============================================================================
 
-test('class re-export: classes get both __type property and __Ω symbol for re-export', () => {
+test('class re-export: classes get static __type but NOT __Ω re-export', () => {
     const res = transform({
         'index.ts': `
             export { MyClass } from './class';
@@ -366,9 +366,11 @@ test('class re-export: classes get both __type property and __Ω symbol for re-e
     // class.ts should have static __type on the class
     expect(res['class.ts']).toContain('static __type');
 
-    // The __ΩMyClass IS added to support re-export of type information
-    // This is the expected behavior - classes need __Ω for re-export scenarios
-    expect(res['index.ts']).toContain('__ΩMyClass');
+    // Classes do NOT get __Ω re-exports — they use static __type property instead.
+    // The class value is referenced directly at runtime via classReference op.
+    // Adding __Ω re-exports for classes would cause ESM SyntaxError because the
+    // source module doesn't export __ΩClassName.
+    expect(res['index.ts']).not.toContain('__ΩMyClass');
 });
 
 test('star export: export * from "./module" passes through __Ω symbols', () => {

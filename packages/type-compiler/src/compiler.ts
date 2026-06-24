@@ -3233,7 +3233,11 @@ export class ReflectionTransformer implements CustomTransformer {
         }
 
         // For .ts files, check if the resolved declaration is a type that will generate __Ω
-        if (isInterfaceDeclaration(resolvedDeclaration) || isTypeAliasDeclaration(resolvedDeclaration) || isEnumDeclaration(resolvedDeclaration) || isClassDeclaration(resolvedDeclaration)) {
+        // Note: classes do NOT generate __Ω symbols — they use static __type property instead.
+        // Classes are resolved at runtime via classReference op (the class value itself),
+        // so they don't need __Ω re-exports. Including classes here would generate re-exports
+        // for symbols that don't exist, causing ESM SyntaxError at link time.
+        if (isInterfaceDeclaration(resolvedDeclaration) || isTypeAliasDeclaration(resolvedDeclaration) || isEnumDeclaration(resolvedDeclaration)) {
             // Check if the source file has reflection enabled
             const reflection = this.getReflectionConfig(declarationSourceFile);
             if (reflection.mode === 'never') return false;
