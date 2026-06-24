@@ -17,10 +17,8 @@
     "Jacopo Scazzosi <jacopo@scazzosi.com>"
   ],
   "license": "MIT",
-  "peerDependencies": {
-    "@runtyped/core": "2.0.0-alpha.1"
-  },
   "dependencies": {
+    "@runtyped/core": "2.0.0-alpha.1",
     "@runtyped/type-spec": "2.0.0-alpha.1",
     "camelcase": "^9.0.0",
     "uuid": "^14.0.0"
