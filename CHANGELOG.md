@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] - `2.0.0` - DeepKit V2
+
+This release cherry-picks the changes from the [DeepKit V2 PR] that are
+applicable to Runtyped. These include but are not limited to a new JIT
+architecture that lazily compiles hot paths on-demand and lots of fixes
+and performance improvements throughout the entire codebase.
+
+AI DISCLAIMER: a lot of this work was done with the help of Sage, an AI
+agent running on a custom harness that maintains continuity and context
+across activations. Models used were GLM 5.2 and DeepSeek V4 Pro hosted
+by [TensorX].
+
+[TensorX]: https://tensorx.ai/
+[DeepKit V2 PR]: https://github.com/marcj/deepkit/pull/693
+
 ## [2026-06-21] - **`1.0.20`** - First stable release!
 
 - BREAKING: removed first-party rollup plugin, `compiler-debug` script and
