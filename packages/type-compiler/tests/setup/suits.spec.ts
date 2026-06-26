@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url);
 const __dirname = import.meta.dirname.replace('/dist/tests/setup', '/tests/setup');
 
 function build(currentDir = process.cwd(), useConfig = 'tsconfig.json'): { [path: string]: string } {
-    process.env.DEBUG = 'deepkit';
+    process.env.DEBUG = 'runtyped';
     const configFile = ts.findConfigFile(currentDir, ts.sys.fileExists, useConfig);
     if (!configFile) throw Error('tsconfig.json not found');
     const { config } = ts.readConfigFile(configFile, ts.sys.readFile);
