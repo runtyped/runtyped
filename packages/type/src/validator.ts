@@ -1,4 +1,4 @@
-import { DeepkitError, stringifyValueWithType } from '@runtyped/core';
+import { RuntypedError, stringifyValueWithType } from '@runtyped/core';
 
 import { entity } from './decorator.js';
 import { ReceiveType } from './reflection/reflection.js';
@@ -67,7 +67,7 @@ export class ValidationErrorItem {
 }
 
 @entity.name('@error:validation')
-export class ValidationError extends DeepkitError {
+export class ValidationError extends RuntypedError {
     constructor(
         public readonly errors: ValidationErrorItem[],
         type?: Type,

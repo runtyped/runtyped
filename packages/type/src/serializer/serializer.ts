@@ -7,7 +7,7 @@
  *
  * You should have received a copy of the MIT License along with this program.
  */
-import { Builder, DeepkitError, Ref, arg, fn, toFastProperties } from '@runtyped/core';
+import { Builder, RuntypedError, Ref, arg, fn, toFastProperties } from '@runtyped/core';
 
 import {
     ReflectionKind,
@@ -216,7 +216,7 @@ export class Serializer {
         if (building.has(type)) {
             return ((data: unknown) => {
                 const f = cache.get(type);
-                if (!f) throw new DeepkitError('DK-T112', 'Recursive type guard not yet initialized');
+                if (!f) throw new RuntypedError('RT-TP112', 'Recursive type guard not yet initialized');
                 return f(data);
             }) as (data: unknown) => data is T;
         }

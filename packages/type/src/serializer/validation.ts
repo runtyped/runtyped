@@ -7,7 +7,7 @@
  *
  * You should have received a copy of the MIT License along with this program.
  */
-import { type Builder, DeepkitError, type Ref } from '@runtyped/core';
+import { type Builder, RuntypedError, type Ref } from '@runtyped/core';
 
 import { Type, TypeFunction, validationAnnotation } from '../reflection/type.js';
 import { ReflectionKind, stringifyType } from '../reflection/type.js';
@@ -112,7 +112,7 @@ export const validationHook: TypeHook<JsonBuildContext> = (type, input, b, state
                         (fn: ValidateFunction, value: any, t: Type, opts: any, expectedParam: string) => {
                             // Check if function expects options but none provided
                             if (fn.length >= 3 && opts === undefined) {
-                                throw new DeepkitError(
+                                throw new RuntypedError(
                                     'DK-T113',
                                     `Invalid option value given to validator function ${fn.name}, expected ${expectedParam}`,
                                 );

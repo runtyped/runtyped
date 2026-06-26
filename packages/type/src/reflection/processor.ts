@@ -56,7 +56,7 @@ import {
 } from './type.js';
 import { MappedModifier, ReflectionOp, TypeIntrinsic } from '@runtyped/type-spec';
 import { isExtendable } from './extends.js';
-import { ClassType, DeepkitError, isArray, isClass, isFunction, stringifyValueWithType } from '@runtyped/core';
+import { ClassType, RuntypedError, isArray, isClass, isFunction, stringifyValueWithType } from '@runtyped/core';
 import { isWithDeferredDecorators } from '../decorator.js';
 import { ReflectionClass, TData } from './reflection.js';
 import { state } from './state.js';
@@ -133,7 +133,7 @@ export function resolveRuntimeType(o: ClassType | Function | Packed | any, args:
         return type as Type;
     }
 
-    throw new DeepkitError('DK-T003', 'No type returned from runtime type program');
+    throw new RuntypedError('RT-TP003', 'No type returned from runtime type program');
 }
 
 interface Frame {
@@ -373,7 +373,7 @@ export class Processor {
             if (isClass(object)) {
                 return { kind: ReflectionKind.any, typeName: object.name };
             }
-            throw new DeepkitError('DK-T001', `No valid runtime type for ${stringifyValueWithType(object)} given.`);
+            throw new RuntypedError('RT-TP001', `No valid runtime type for ${stringifyValueWithType(object)} given.`);
         }
 
         for (let i = 0; i < inputs.length; i++) {

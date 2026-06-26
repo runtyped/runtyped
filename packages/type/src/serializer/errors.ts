@@ -7,7 +7,7 @@
  *
  * You should have received a copy of the MIT License along with this program.
  */
-import { DeepkitError, stringifyValueWithType } from '@runtyped/core';
+import { RuntypedError, stringifyValueWithType } from '@runtyped/core';
 
 // Re-export from core for convenience
 export { stringifyValueWithType } from '@runtyped/core';
@@ -21,7 +21,7 @@ export { stringifyValueWithType } from '@runtyped/core';
  * // Message: "Serialization failed. user.name: Expected string, got number"
  * ```
  */
-export class SerializationError extends DeepkitError {
+export class SerializationError extends RuntypedError {
     constructor(
         public originalMessage: string,
         public errorType: string = '',
