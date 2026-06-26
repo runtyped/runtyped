@@ -13,5 +13,12 @@
     "Marc J. Schmidt <marc@marcjschmidt.de>",
     "Jacopo Scazzosi <jacopo@scazzosi.com>"
   ],
+  "dependencies": {
+    "@runtyped/type": "^2.0.0-alpha.3",
+    "mitata": "^1.0.34"
+  },
+  "devDependencies": {
+    "@runtyped/type-compiler": "^2.0.0-alpha.3"
+  },
   "license": "MIT"
 }
