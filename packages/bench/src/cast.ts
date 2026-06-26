@@ -1,5 +1,5 @@
 import { bench, do_not_optimize, group } from 'mitata';
-import { is } from '@runtyped/type';
+import { cast } from '@runtyped/type';
 
 // ============================================================================
 // Types
@@ -41,6 +41,13 @@ const simpleUser = {
     active: true,
 };
 
+const simpleUserWithCoercion = {
+    id: '42',
+    name: 'Alice',
+    email: 'alice@example.com',
+    active: 1,
+};
+
 const complexUser = {
     id: 1,
     name: 'Alice',
@@ -57,33 +64,22 @@ const complexUser = {
     createdAt: '2024-01-15T10:30:00.000Z',
 };
 
-const invalidUser = {
-    id: 'not-a-number',
-    name: 'Alice',
-    email: 'alice@example.com',
-    active: true,
-};
-
 // ============================================================================
 // Benchmarks
 // ============================================================================
 
-group('is() — simple types', () => {
-    bench('SimpleUser (valid)', () => {
-        do_not_optimize(is<SimpleUser>(simpleUser));
+group('cast() — simple types', () => {
+    bench('SimpleUser (already valid)', () => {
+        do_not_optimize(cast<SimpleUser>(simpleUser));
     });
 
-    bench('SimpleUser (invalid)', () => {
-        do_not_optimize(is<SimpleUser>(invalidUser));
+    bench('SimpleUser (with coercion)', () => {
+        do_not_optimize(cast<SimpleUser>(simpleUserWithCoercion));
     });
 });
 
-group('is() — nested types', () => {
+group('cast() — nested types', () => {
     bench('ComplexUser (valid)', () => {
-        do_not_optimize(is<ComplexUser>(complexUser));
-    });
-
-    bench('ComplexUser (invalid)', () => {
-        do_not_optimize(is<ComplexUser>(invalidUser));
+        do_not_optimize(cast<ComplexUser>(complexUser));
     });
 });
