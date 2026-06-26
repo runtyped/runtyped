@@ -11,7 +11,7 @@ node --expose-gc dist/index.js
 
 ## JIT  Compilation
 
-Use the `DEEPKIT_JIT_THRESHOLD` environment variable to set the threshold
+Use the `RUNTYPED_JIT_THRESHOLD` environment variable to set the threshold
 for triggering JIT compilation:
 
 | Value | Description |
@@ -22,11 +22,11 @@ for triggering JIT compilation:
 
 ```sh
 # Compilation always triggers
-DEEPKIT_JIT_THRESHOLD=0 node --expose-gc dist/index.js
+RUNTYPED_JIT_THRESHOLD=0 node --expose-gc dist/index.js
 
 # Compilation triggered after 100 rounds
-DEEPKIT_JIT_THRESHOLD=100 node --expose-gc dist/index.js
+RUNTYPED_JIT_THRESHOLD=100 node --expose-gc dist/index.js
 
 # Compilation never triggers
-DEEPKIT_JIT_THRESHOLD=Infinity node --expose-gc dist/index.js
+RUNTYPED_JIT_THRESHOLD=Infinity node --expose-gc dist/index.js
 ```

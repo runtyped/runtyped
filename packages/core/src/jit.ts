@@ -605,8 +605,8 @@ let _activeBuilder: Builder | null = null;
 // ============================================================================
 
 let jitThreshold = (() => {
-    if (typeof process !== 'undefined' && process.env?.DEEPKIT_JIT_THRESHOLD) {
-        const val = process.env.DEEPKIT_JIT_THRESHOLD;
+    if (typeof process !== 'undefined' && process.env?.RUNTYPED_JIT_THRESHOLD) {
+        const val = process.env.RUNTYPED_JIT_THRESHOLD;
         if (val === 'Infinity') return Infinity;
         const num = parseInt(val, 10);
         if (!isNaN(num)) return num;

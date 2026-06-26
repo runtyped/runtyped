@@ -1210,8 +1210,8 @@ describe('jit2', () => {
         });
 
         test('getJitThreshold returns default value', () => {
-            if (process.env.DEEPKIT_JIT_THRESHOLD) {
-                expect(getJitThreshold()).toBe(process.env.DEEPKIT_JIT_THRESHOLD === 'Infinity' ? Infinity : parseInt(process.env.DEEPKIT_JIT_THRESHOLD, 10));
+            if (process.env.RUNTYPED_JIT_THRESHOLD) {
+                expect(getJitThreshold()).toBe(process.env.RUNTYPED_JIT_THRESHOLD === 'Infinity' ? Infinity : parseInt(process.env.RUNTYPED_JIT_THRESHOLD, 10));
             } else {
                 expect(getJitThreshold()).toBe(0);
             }
