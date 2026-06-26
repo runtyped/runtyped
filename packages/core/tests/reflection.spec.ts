@@ -39,16 +39,17 @@ test('simple', () => {
     }
 
     const code = User.toString();
-    expect(removeExtraWhitespace(code)).toBe(removeExtraWhitespace(`class User {
-        static { this.test = uuid(); }
+  expect(removeExtraWhitespace(code)).toBe(removeExtraWhitespace(`class User {
+        id = uuid();
+        username;
+        bla = 'constructor()';
+        static test = uuid();
         constructor(nothing = '{') {
-            this.id = uuid();
-            this.bla = 'constructor()';
         }
         doSomething() {
             this.username = 'asd';
         }
-        static { this.__type = ['id', function () { return uuid(); }, 'username', 'bla', function () { return 'constructor()'; }, 'test', function () { return uuid(); }, 'nothing', () => "{", 'constructor', 'doSomething', 'User', '&3!>"&3#8&3$>%!3&s>\\'P&2(>)"0*P$0+5w,']; }
+        static __type = ['id', function () { return uuid(); }, 'username', 'bla', function () { return 'constructor()'; }, 'test', function () { return uuid(); }, 'nothing', () => "{", 'constructor', 'doSomething', 'User', '&3!>"&3#8&3$>%!3&s>\\'P&2(>)"0*P$0+5w,'];
     }`));
 });
 

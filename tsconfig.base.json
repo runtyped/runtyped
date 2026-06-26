@@ -11,7 +11,7 @@
     "declaration": true,
     "composite": true,
     "skipLibCheck": true,
-    "useDefineForClassFields": false,
+    // "useDefineForClassFields": false,
     "isolatedModules": true,
     "tsBuildInfoFile": ".tsbuildinfo",
     "moduleResolution": "nodenext"

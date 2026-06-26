@@ -9,6 +9,16 @@ applicable to Runtyped. These include but are not limited to a new JIT
 architecture that lazily compiles hot paths on-demand and lots of fixes
 and performance improvements throughout the entire codebase.
 
+Then, building on top of the changes cherry-picked from DeepKit V2, this
+release brings the following:
+
+- TS's compiler options `useDefineForClassFields` is now implicitly set
+  to `true` to enable ES2022+ class field semantics.
+- A fix for ignored instance fields sharing the same name as static fields.
+  This behavior was also present in Deepkit V1, and thus was inherited by
+  Runtyped, and was fixed in commit 403f085. Cherry-picking from Deepkit V2 
+  re-introduced the bug, requiring a new fix.
+
 AI DISCLAIMER: a lot of this work was done with the help of Sage, an AI
 agent running on a custom harness that maintains continuity and context
 across activations. Models used were GLM 5.2 and DeepSeek V4 Pro hosted
