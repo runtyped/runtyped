@@ -25,4 +25,7 @@ npm run build
 
 # Run tests.
 npm test
+
+# Run benchmarks
+npm run bench
 ```
