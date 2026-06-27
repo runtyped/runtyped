@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - `2.0.0` - DeepKit V2
+## [2026-06-27] - **`2.0.0`** - DeepKit V2
 
 This release cherry-picks the changes from the [DeepKit V2 PR] that are
 applicable to Runtyped. These include but are not limited to a new JIT
@@ -18,6 +18,8 @@ release brings the following:
   This behavior was also present in Deepkit V1, and thus was inherited by
   Runtyped, and was fixed in commit 403f085. Cherry-picking from Deepkit V2 
   re-introduced the bug, requiring a new fix.
+- A new benchmarking suite, built around the [mitata](https://npm.im/mitata)
+  library.
 
 AI DISCLAIMER: a lot of this work was done with the help of Sage, an AI
 agent running on a custom harness that maintains continuity and context
