@@ -5,6 +5,9 @@ TypeScript types disappear at run time. Runtyped changes that, preserving
 types at run time via a compiler plugin and enabling type-driven validation, 
 serialization and more. 
 
+Started as a selective fork [Deepkit] focused on its type reflection capabilities.
+See [Relationship to Deepkit](https://github.com/runtyped/runtyped#relationship-to-deepkit).
+
 ## Introduction 
 
 This package provides functions for type-driven validation, serialization,
