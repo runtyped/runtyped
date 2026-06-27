@@ -1,6 +1,7 @@
 /*
  * Runtyped Framework
- * Copyright (C) 2021 Deepkit UG, Marc J. Schmidt
+ * Copyright (c) Deepkit UG, Marc J. Schmidt
+ * Copyright (c) Jacopo Scazzosi
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the MIT License.
@@ -13,7 +14,16 @@ export * from './src/changes.js';
 export * from './src/decorator.js';
 export * from './src/decorator-builder.js';
 export * from './src/reference.js';
-export * from './src/serializer.js';
+export * from './src/serializer/context.js';
+export * from './src/serializer/errors.js';
+export * from './src/serializer/naming.js';
+export * from './src/serializer/registry.js';
+export * from './src/serializer/state.js';
+export * from './src/serializer/union-utils.js';
+export * from './src/serializer/union.js';
+export * from './src/serializer/validation.js';
+export * from './src/serializer/handlers.js';
+export * from './src/serializer/serializer.js';
 export * from './src/serializer-facade.js';
 export * from './src/typeguard.js';
 export * from './src/types.js';
@@ -23,14 +33,15 @@ export * from './src/validators.js';
 export * from './src/snapshot.js';
 export * from './src/change-detector.js';
 export * from './src/path.js';
+export * from './src/type-annotations.js';
 export * from './src/type-serialization.js';
 export * from './src/registry.js';
 export * from './src/default.js';
 export * from './src/mixin.js';
+export * from './src/fast-date.js';
 export * from './src/jsonschema/jsonschema.js';
 
 export * from './src/reflection/type.js';
-export { typeAnnotation as metaAnnotation } from './src/reflection/type.js';
 
 export * from './src/reflection/processor.js';
 export * from './src/reflection/type.js';

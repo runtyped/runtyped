@@ -56,7 +56,7 @@ import {
 } from './type.js';
 import { MappedModifier, ReflectionOp, TypeIntrinsic } from '@runtyped/type-spec';
 import { isExtendable } from './extends.js';
-import { ClassType, isArray, isClass, isFunction, stringifyValueWithType } from '@runtyped/core';
+import { ClassType, RuntypedError, isArray, isClass, isFunction, stringifyValueWithType } from '@runtyped/core';
 import { isWithDeferredDecorators } from '../decorator.js';
 import { ReflectionClass, TData } from './reflection.js';
 import { state } from './state.js';
@@ -133,7 +133,7 @@ export function resolveRuntimeType(o: ClassType | Function | Packed | any, args:
         return type as Type;
     }
 
-    throw new Error('No type returned from runtime type program');
+    throw new RuntypedError('RT-TP003', 'No type returned from runtime type program');
 }
 
 interface Frame {
@@ -368,7 +368,12 @@ export class Processor {
                     parameters: [], return: { kind: ReflectionKind.any },
                 };
             }
-            throw new Error(`No valid runtime type for ${stringifyValueWithType(object)} given. Is @runtyped/type-compiler correctly installed? Execute runtyped-type-install to check`);
+            // Graceful degradation for external library classes without __type
+            // Returns TypeAny with typeName so DI can provide meaningful error messages
+            if (isClass(object)) {
+                return { kind: ReflectionKind.any, typeName: object.name };
+            }
+            throw new RuntypedError('RT-TP001', `No valid runtime type for ${stringifyValueWithType(object)} given.`);
         }
 
         for (let i = 0; i < inputs.length; i++) {

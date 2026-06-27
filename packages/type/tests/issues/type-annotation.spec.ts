@@ -5,7 +5,7 @@ import { assertType, MapName, ReflectionKind, typeAnnotation, validationAnnotati
 import { cast, serialize } from '../../src/serializer-facade.js';
 
 import { TypeAnnotation } from '@runtyped/core';
-import { MinLength } from '../../src/validator.js';
+import { MinLength } from '../../src/type-annotations.js';
 
 test('Meta', () => {
     type T = string & TypeAnnotation<'foo', { foo: 1, bar: true }>;

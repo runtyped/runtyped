@@ -1,0 +1,1 @@
+{"extends":"../tsconfig.json","reflection":true,"compilerOptions":{"types":["node"]}}

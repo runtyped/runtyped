@@ -18,7 +18,8 @@ import {
     widenLiteral
 } from '../src/reflection/type.js';
 import { expectEqualType } from './utils.js';
-import { Maximum, MinLength, validate } from '../src/validator.js';
+import { Maximum, MinLength } from '../src/type-annotations.js';
+import { validate } from '../src/validator.js';
 
 const symbol = Symbol();
 

@@ -1,27 +1,54 @@
 import { test } from 'node:test';
+
 import { expect } from '@runtyped/expect';
+
 import { parseJSDocAttributeFromText } from '../src/reflection-ast.js';
 
 test('parse js doc attribute', () => {
-    expect(parseJSDocAttributeFromText(`/**
+    expect(
+        parseJSDocAttributeFromText(
+            `/**
     * @attr attr
-    */`, 'attr')).toBe('attr');
+    */`,
+            'attr',
+        ),
+    ).toBe('attr');
 
-    expect(parseJSDocAttributeFromText(`/**
+    expect(
+        parseJSDocAttributeFromText(
+            `/**
     * @attr attr
-    */`, 'attr2')).toBeUndefined();
+    */`,
+            'attr2',
+        ),
+    ).toBeUndefined();
 
-    expect(parseJSDocAttributeFromText(`/**
+    expect(
+        parseJSDocAttributeFromText(
+            `/**
     * @attr2 attr2-content
     * @attr attr-content
-    */`, 'attr')).toBe('attr-content');
+    */`,
+            'attr',
+        ),
+    ).toBe('attr-content');
 
-    expect(parseJSDocAttributeFromText(`/**
+    expect(
+        parseJSDocAttributeFromText(
+            `/**
     * @attr
-    */`, 'attr')).toBe('');
+    */`,
+            'attr',
+        ),
+    ).toBe('');
 
-    expect(parseJSDocAttributeFromText(`/**
+    expect(
+        parseJSDocAttributeFromText(
+            `/**
     * @attr2 attr2-content
     * @attr
-    */`, 'attr')).toBe('');
+    */`,
+            'attr',
+        ),
+    ).toBe('');
 });

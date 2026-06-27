@@ -39,7 +39,7 @@ test('simple', () => {
     }
 
     const code = User.toString();
-    expect(removeExtraWhitespace(code)).toBe(removeExtraWhitespace(`class User {
+  expect(removeExtraWhitespace(code)).toBe(removeExtraWhitespace(`class User {
         id = uuid();
         username;
         bla = 'constructor()';

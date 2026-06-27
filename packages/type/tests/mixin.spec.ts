@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import { expect } from '@runtyped/expect';
 import { mixin } from '../src/mixin.js';
 import { assertType, AutoIncrement, PrimaryKey, ReflectionKind, resolveTypeMembers } from '../src/reflection/type.js';
-import { MinLength } from '../src/validator.js';
+import { MinLength } from '../src/type-annotations.js';
 import { reflect, ReflectionClass } from '../src/reflection/reflection.js';
 import { deserialize } from '../src/serializer-facade.js';
 

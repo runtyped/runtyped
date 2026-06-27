@@ -1,6 +1,7 @@
 /*
  * Runtyped Framework
- * Copyright (C) 2021 Deepkit UG, Marc J. Schmidt
+ * Copyright (c) Deepkit UG, Marc J. Schmidt
+ * Copyright (c) Jacopo Scazzosi
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the MIT License.
@@ -172,7 +173,7 @@ export function isString(obj: any): obj is string {
 
 export function isConstructable(fn: any): boolean {
     try {
-        new new Proxy(fn, { construct: () => ({}) });
+        new new Proxy(fn, { construct: () => ({}) })();
         return true;
     } catch (err) {
         return false;

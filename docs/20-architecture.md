@@ -13,13 +13,13 @@ The system is split into two distinct phases: **Compilation (Build-time)** and *
 ## 1. The Compilation Phase (The Architect)
 **Location:** `packages/type-compiler/`
 
-The compiler is a TypeScript Transformer. It intercepts the compilation process and performs the "distillation" of types.
+The compiler is a TypeScript Transformer. It intercepts the compilation process and performs the "distillation" of types. It is injected into the TypeScript compiler via a patch to `tsc.js` (the `//runtyped_patch_patchGetTransformers` block) that registers the `ReflectionTransformer` as a `before` transformer.
 
 ### Key Workflow:
 1.  **AST Traversal**: The compiler walks the TypeScript Abstract Syntax Tree (AST).
 2.  **Type Extraction**: It identifies interfaces, classes, unions, and other type constructs.
 3.  **Bytecode Generation**: It converts these high-level constructs into a highly compressed sequence of `ReflectionOp` instructions (the "bytecode").
-4.  **Injection**: The compiler injects this bytecode and the associated metadata (the "payload") into the emitted JavaScript code. This is often done via a hidden, highly optimized array (e.g., `__ΩUser`).
+4.  **Injection**: The compiler injects this bytecode and the associated metadata (the "payload") into the emitted JavaScript code as a `static __type` array on classes and a `__type` array on functions.
 
 ### Member Deduplication (Build-Time)
 
@@ -32,12 +32,12 @@ class Message extends ComposedMessage {
 }
 ```
 
-The compiler's deduplication logic at `compiler.ts:1421` uses a combined key of **(name, static flag)** rather than name alone. This ensures both the static `type` and the instance `type` are preserved in the bytecode, each with the correct `static` modifier flag. Without this distinction, one member would be silently dropped — and since TypeScript's member ordering is non-deterministic between compiler versions, the behavior would be unpredictable.
+The compiler's deduplication logic at `compiler.ts:~1875` uses a combined key of **(name, static flag)** rather than name alone. This ensures both the static `type` and the instance `type` are preserved in the bytecode, each with the correct `static` modifier flag. Without this distinction, one member would be silently dropped — and since `useDefineForClassFields` (see below) enforces static-before-instance declaration order, the instance version would always be the one dropped, making it invisible to the serializer.
 
 **Key Files:**
-- `src/compiler.ts`: The heart of the transformation logic. Member processing at line ~1416, property handling at ~1641.
+- `src/compiler.ts`: The heart of the transformation logic. Member processing at line ~1875, property handling at ~2110.
 - `src/reflection-ast.ts`: Utilities for translating TS AST nodes into the internal reflection model.
-- `src/plugin.ts`: The entry point for the TypeScript compiler plugin.
+- `install-transformer.ts`: Patches `tsc.js` to inject the transformer at build time.
 
 ---
 
@@ -62,7 +62,7 @@ When you call `typeOf<T>()`, the engine uses the bytecode as a **factory specifi
 
 ### Member Deduplication (Run-Time)
 
-The processor mirrors the compiler's deduplication logic in the `ReflectionOp.class` handler (`processor.ts:605`). When reconstructing type objects from bytecode, properties with the same (name, static) pair replace earlier entries. This is essential because:
+The processor mirrors the compiler's deduplication logic in the `ReflectionOp.class` handler (`processor.ts:~605`). When reconstructing type objects from bytecode, properties with the same (name, static) pair replace earlier entries. This is essential because:
 
 1. **Inheritance**: A child class may override a parent property with different flags (e.g., changing visibility or adding `optional`). The processor keeps the most recently encountered version.
 2. **Consistency with the compiler**: The processor must interpret the bytecode the same way the compiler intended. If deduplication keys diverged between the two phases, the runtime type tree would not match the source code.
@@ -70,8 +70,9 @@ The processor mirrors the compiler's deduplication logic in the `ReflectionOp.cl
 This dual-phase deduplication — compiler and processor using the same logical key — represents a key architectural invariant: the bytecode is not self-describing; it relies on the processor sharing the compiler's interpretation rules. Each `ReflectionOp` carries implicit semantics that both sides must agree on.
 
 **Key Files:**
-- `packages/type/src/reflection/processor.ts`: The core VM loop (the `Processor` class) that manages the stack, frames, and instruction execution.
-- `packages/type/src/reflection/reflection.ts`: The public API (`typeOf`, `reflect`, etc.) that interfaces with the Processor.
+- `packages/type/src/reflection/processor.ts`: The core VM loop (the `Processor` class) that manages the stack, frames, and instruction execution. Member deduplication at ~605.
+- `packages/type/src/reflection/reflection.ts`: The public API (`typeOf`, `reflect`, `ReflectionClass`) that interfaces with the Processor.
+- `packages/core/src/jit.ts`: The JIT builder (`Builder` class) that constructs expression trees for serializer code generation. Supports both bytecode VM (interpreter) and JIT compilation with tiered execution.
 - `packages/type-spec/`: Defines the formal `ReflectionOp` opcodes and the structural specification.
 
 ---
@@ -80,18 +81,17 @@ This dual-phase deduplication — compiler and processor using the same logical 
 
 The `ReflectionOp` enum defines ~90 opcodes, each encoded as a single character by offsetting the numeric value by 33 (the printable ASCII range starting at `!`). This keeps the injected bytecode string extremely compact.
 
-Consider the `Message` class from the member deduplication example above. After compilation with the fixed deduplication, the compiler emits:
+Consider the `Message` class from the member deduplication example above. With `useDefineForClassFields` enabled, TypeScript enforces static-before-instance declaration order, so the compiler emits:
 
 ```js
 static __type = [
     () => ComposedMessage,                        // [0] base class reference
-    'type',                                       // [1] property name (static)
-    function () { return 'my-id'; },              // [2] static default value
-    function () { return Message.type; },         // [3] instance default value
-    'routingKeys',                                // [4] property name
-    'endpoint',                                   // [5] property name
-    'Message',                                    // [6] class name
-    'P7!&3"9s>#&3"9>$&F3%8&3&85w\''             // [7] encoded ops
+    'type',                                       // [1] property name
+    function () { return 'my-id'; },              // [2] default value
+    'routingKeys',                                // [3] property name
+    'endpoint',                                   // [4] property name
+    'Message',                                    // [5] class name
+    'P7!&3"9s>#&F3$8&3%85w\''                    // [6] encoded ops
 ];
 ```
 
@@ -101,24 +101,21 @@ Decoding the ops string (each character's charCode minus 33):
 |--------|------|--------|---------|
 | 0 | 47 | `frame` | Create new stack frame |
 | 1 | 22 | `classReference` | Reference base class at stack[0] |
-| 2 | 0 | `never` | void type (no return) |
 | 3 | 5 | `string` | Push string type |
 | 4 | 18 | `property` | Pop type, create property with name from stack[1] |
-| 5 | 1 | `any` | (parameter for property — name ref) |
 | 6 | 24 | `readonly` | Mark property readonly |
 | 7 | 82 | `static` | **Mark property static** |
 | 8 | 29 | `defaultValue` | Assign default from stack[2] |
-| 9 | 2 | `unknown` | (parameter for next property) |
+| 9 | 2 | `unknown` | Type for next property (inferred from initializer) |
 | 10 | 5 | `string` | Push string type |
 | 11 | 18 | `property` | Pop type, create property with name from stack[3] |
-| 12 | 1 | `any` | (parameter — name ref) |
-| 13 | 24 | `readonly` | Mark property readonly |
-| 14 | 29 | `defaultValue` | Assign default from stack[3] |
-| ... | ... | ... | Remaining properties: `routingKeys`, `endpoint` |
-| 25 | 20 | `class` | Pop frame, construct class type |
-| 26 | 86 | `typeName` | Assign class name from stack[6] |
+| 13 | 23 | `optional` | Mark property optional |
+| 14 | 5 | `string` | Push string type |
+| 15 | 18 | `property` | Pop type, create property with name from stack[4] |
+| 17 | 23 | `optional` | Mark property optional |
+| 18 | 20 | `class` | Pop frame, construct class type |
 
-Notice the two `property` ops: the first (at offset 3) gets the `static` flag; the second (at offset 10) does not. Both share the same name `'type'` but are distinct members. The processor uses the same (name, static) key to keep them separate during reconstruction.
+Notice the `static` flag at offset 7: this marks the first `type` property (the static one). The second `property` op (offset 11, for `routingKeys`) does not have `static` — it's an instance property. The processor uses the same (name, static) key to keep them separate during reconstruction, and `isPropertyMemberType()` filters out the static one during serialization.
 
 **Encoding function** (`processor.ts:83`):
 ```ts
@@ -135,36 +132,57 @@ The constraint of fitting all opcodes in 93 values (charCode 33-126, the printab
 
 ## 4. The Serializer: Where Reflection Meets Data Transformation
 
-**Location:** `packages/type/src/serializer.ts`
+**Location:** `packages/type/src/serializer/`
 
-The serializer bridges the reflection type system and actual data transformation. It uses the same `Type` objects produced by the processor to generate optimized serialization/deserialization functions.
+The serializer bridges the reflection type system and actual data transformation. It uses the `Type` objects produced by the processor to generate optimized serialization/deserialization functions via the JIT builder (`packages/core/src/jit.ts`).
 
 ### The `static` Flag and Serialization
 
-A critical interaction: the `isPropertyMemberType()` function (`type.ts:568`) returns `false` for properties with `static: true`. This means the serializer skips static properties entirely — they don't belong to instances. The member deduplication bug described earlier caused the instance `type` property to be incorrectly marked `static`, making it invisible to the serializer. The fix ensured that the instance property is correctly classified, restoring serialization.
+A critical interaction: the `isPropertyMemberType()` function (`type.ts:597`) returns `false` for properties with `static: true`. This means the serializer skips static properties entirely — they don't belong to instances. The member deduplication logic ensures both static and instance properties with the same name survive into the bytecode, but only the instance version reaches the serializer.
 
 ```ts
-// type.ts:568 — the gate between reflection and serialization
+// type.ts:597 — the gate between reflection and serialization
 export function isPropertyMemberType(type: Type): type is TypePropertySignature | TypeProperty {
     if (type.kind === ReflectionKind.property) return !type.static;
     return type.kind === ReflectionKind.propertySignature;
 }
 ```
 
+### `useDefineForClassFields` and Property Presence
+
+ES2022 class field semantics (`useDefineForClassFields: true`, the default for `target: esnext`) change how TypeScript compiles declared-but-uninitialized class fields. Consider:
+
+```ts
+class Team {
+    lead?: User & Reference;  // declared, no initializer
+}
+```
+
+- **ES2021** (`useDefineForClassFields: false`): `lead` is never assigned to the instance. `'lead' in new Team()` → `false`.
+- **ES2022** (`useDefineForClassFields: true`): `lead` is defined on the instance via `Object.defineProperty(this, 'lead', {value: undefined, ...})`. `'lead' in new Team()` → `true`.
+
+Runtyped targets ES2022 semantics. The serializer's property-presence check (`b.has(input, key)`, which generates the `in` operator) now returns `true` for all declared optional fields, even when they have no value. This is correct: the field was declared, so it exists on the instance. The serializer represents this as `null` in JSON output (see below), not as an absent key.
+
 ### Null/Undefined Semantics
 
-JSON cannot represent `undefined` — `JSON.stringify` silently drops undefined values. Runtyped solves this by using `null` as a transport-level sentinel for explicitly-set `undefined` on optional fields. During serialization:
+JSON cannot represent `undefined` — `JSON.stringify` silently drops undefined values. Runtyped uses `null` as a transport-level sentinel for explicitly-set `undefined` on optional fields. The serializer's `buildIncrementalPropBody` function (`handlers.ts:~2553`) implements a three-way distinction:
 
-- If a property is **optional** and its value is `undefined`, the serializer emits `null` (the `undefinedSetterCode`).
-- During deserialization, `null` on an optional property is converted back to `undefined` (the `nullSetterCode`).
-- This preserves the critical distinction between "field was never set" (absent key) and "field was explicitly set to undefined" (present key with null/undefined value).
+| Property type | Key absent | Key present, value `undefined` | Key present, value `null` |
+|---|---|---|---|
+| **Required** (`prop: T`) | Error / default | Error / default | Error (not nullable) |
+| **Optional** (`prop?: T`) | Omit from output | Emit `null` | Emit `null` |
+| **Nullable** (`prop: T \| null`) | Emit `null` | Emit `null` | Emit `null` |
+| **Optional + Nullable** (`prop?: T \| null`) | Omit from output | Emit `null` | Emit `null` |
 
-This is an intentional design choice, not a bug: `serializeToJson()` output is a JSON-compatible representation, not an identity transform. The `roundTrip()` function (serialize then deserialize) provides full fidelity.
+The `null` output for present-but-undefined optional fields is **intentional**: it preserves the critical distinction between "field was never set" (absent key → triggers default on deserialization) and "field was explicitly set to undefined" (present key with `null` → preserved as `undefined` on deserialization). This is essential for database patch semantics where `null` communicates "reset this field."
+
+This means `serializeToJson(instance) !== instance` when the instance has optional fields with `undefined` values — the serialized output uses `null` as the JSON-safe representation. The `roundTrip()` function (serialize then deserialize) provides full fidelity: `null → undefined` on the deserialization side.
 
 **Key Files:**
-- `packages/type/src/serializer.ts`: Template-based serializer code generation. The `setExplicitUndefined` logic at ~1963, the code generation templates at ~917.
+- `packages/type/src/serializer/handlers.ts`: Core serialization/deserialization logic. `buildObjectLiteralBody` at ~2400, `buildIncrementalPropBody` at ~2548, `deserializeClass` at ~2923.
+- `packages/type/src/serializer/serializer.ts`: JIT-based function generation and caching.
 - `packages/type/src/serializer-facade.ts`: Public API (`serialize`, `deserialize`, `cast`, `roundTrip`).
-- `packages/type/src/reflection/type.ts`: `isPropertyMemberType()` at line 568 — the gate between reflection and serialization.
+- `packages/type/src/reflection/type.ts`: `isPropertyMemberType()` at line 597 — the gate between reflection and serialization.
 
 ---
 
@@ -192,8 +210,10 @@ These are the implicit contracts that must hold across the system. Violating any
 
 4. **Stack discipline**: The processor's stack depth must return to zero after each top-level type program completes. Frame imbalances indicate bytecode corruption or a compiler bug.
 
-5. **Null/undefined round-trip**: Optional fields use `null` as a JSON-safe undefined sentinel. The serializer and deserializer must agree on when and how this conversion occurs, governed by `setExplicitUndefined()` and `isOptional()`.
+5. **Null/undefined round-trip**: Optional fields use `null` as a JSON-safe undefined sentinel. The serializer and deserializer must agree on when and how this conversion occurs. The `in` operator is the mechanism for distinguishing "absent" from "present-but-undefined." With `useDefineForClassFields: true`, all declared fields are present on instances, so the `in` check returns `true` for all declared fields — this is correct behavior, not a bug.
+
+6. **`useDefineForClassFields` and declaration order**: With ES2022 semantics enabled, TypeScript enforces that a static field must be declared before an instance field that references it (TS2729). This means `static readonly type = 'my-id'` must come before `readonly type: string = Message.type`. The compiler's deduplication must be static-aware to handle this correctly.
 
 ---
 
-*Document prepared by [Sage](https://treesandrobots.com/2026/03/sage-the-harmonic-selector.html). Updated during the ESM migration work (June 2026) to document the member deduplication invariant, bytecode encoding details, and serializer integration patterns.*
+*Document prepared by [Sage](https://treesandrobots.com/2026/03/sage-the-harmonic-selector.html). Updated June 2026 to document the `useDefineForClassFields` ES2022 transition, member deduplication invariant, bytecode encoding details, and serializer null/undefined semantics.*

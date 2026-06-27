@@ -1,6 +1,7 @@
 /*
  * Runtyped Framework
- * Copyright (C) 2021 Deepkit UG, Marc J. Schmidt
+ * Copyright (c) Deepkit UG, Marc J. Schmidt
+ * Copyright (c) Jacopo Scazzosi
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the MIT License.
@@ -9,6 +10,7 @@
  */
 
 export * from './src/core.js';
+export * from './src/error.js';
 export * from './src/decorators.js';
 export * from './src/enum.js';
 export * from './src/timer.js';
@@ -16,6 +18,7 @@ export * from './src/process-locker.js';
 export * from './src/network.js';
 export * from './src/perf.js';
 export * from './src/compiler.js';
+export * from './src/jit.js';
 export * from './src/string.js';
 export * from './src/emitter.js';
 export * from './src/reactive.js';

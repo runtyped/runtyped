@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "strict": true,
-    "target": "esnext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "target": "es2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "esModuleInterop": true
   },
   "reflection": true,
