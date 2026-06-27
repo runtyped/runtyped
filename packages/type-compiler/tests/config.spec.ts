@@ -6,7 +6,7 @@ import { expect } from '@runtyped/expect';
 import { ConfigResolver, TsConfigJson, defaultExcluded, getConfigResolver } from '../src/config.js';
 import { patternMatch } from '../src/resolver.js';
 
-process.env.DEBUG = 'deepkit';
+process.env.DEBUG = 'runtyped';
 
 function buildHost(files: { [fileName: string]: TsConfigJson }): ParseConfigHost {
     return {

@@ -2,11 +2,11 @@
 ## Runtyped
 
 TypeScript types disappear at runtime. Runtyped changes that, preserving types
-at runtime via a compiler plugin.
+at runtime via a compiler plugin. Define your types once and use them everywhere.
+No schema duplication. Just TypeScript. 
 
-Define your types once and use them everywhere — validation, serialization
-database, HTTP, RPC, and dependency injection. No schema duplication. No code
-generation. Just TypeScript.
+Started as a selective fork [Deepkit] focused on its type reflection capabilities.
+See [Relationship to Deepkit](#relationship-to-deepkit).
 
 ## Table of Contents
 

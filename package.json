@@ -8,6 +8,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
+    "bench": "node --expose-gc packages/bench/dist/index.js",
     "test": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test 'packages/*/dist/tests/**/*.spec.js'",
     "test:coverage": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test --experimental-test-coverage 'packages/*/dist/tests/**/*.spec.js'",
     "build": "tsc --build tsconfig.json",

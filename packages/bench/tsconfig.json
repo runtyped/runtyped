@@ -10,6 +10,7 @@
   },
   "reflection": true,
   "include": [
+    "src",
     "tests",
     "index.ts"
   ],
