@@ -5,19 +5,44 @@ TypeScript types disappear at run time. Runtyped changes that, preserving
 types at run time via a compiler plugin and enabling type-driven validation, 
 serialization and more. 
 
-Started as a selective fork [Deepkit] focused on its type reflection capabilities.
-See [Relationship to Deepkit](https://github.com/runtyped/runtyped#relationship-to-deepkit).
+Started as a selective fork [DeepKit] focused on its type reflection capabilities.
+See [Relationship to DeepKit](https://github.com/runtyped/runtyped#relationship-to-deepkit).
 
 ## Introduction 
 
 This package provides functions for type-driven validation, serialization,
-schema generation and more, building on top of [@runtyped/type-compiler]'s 
-reflection of type information - which would normally be available only at
-compile time - into run-time values.
+schema generation and more, leveraging the runtime reflection of type
+information provided by [@runtyped/type-compiler] (for TypeScript up to 6.x)
+or [@runtyped/typescript] (for TypeScript 7.x and later).
 
 Check the documentation at [https://github.com/runtyped/runtyped].
 
-## Installation
+## Installation - TypeScript 7.x (Go)
+
+Ever since version 7.0, the TypeScript compiler is now written and maintained
+in the Go programming language rather than in TypeScript itself and published
+as standalone pre-compiled binaries. As such, the in-place patching approach 
+used by [@runtyped/type-compiler], inherited by `@deepkit/type-compiler`, does
+not work anymore. 
+
+For TypeScript 7.x we have created a patchset on top of the official compiler
+that extends the latter with runtime type reflection: [@runtyped/typescript].
+The patchset is maintained as a fork ([https://github.com/runtyped/TypeScript])
+and published as a drop-in replacement for the official `typescript` package:
+
+```sh
+# Replaces the official `typescript` package, indentical CLI API.
+# No need to run a separate patching script as required for older TypeScript
+# versions.
+npm i --dev @runtyped/typescript
+
+# Install @runtyped/type as a run-time dependency.
+npm i @runtyped/type
+```
+
+For more information see [@runtyped/typescript].
+
+## Installation - TypeScript 6.x
 
 ```sh
 # Install @runtyped/type as a run-time dependency and @runtyped/type-compiler
@@ -65,6 +90,8 @@ const type = typeOf<User>();
 const schema = toJsonSchema<User>();
 ```
 
-
+[DeepKit]: https://github.com/deepkit/deepkit
+[@runtyped/typescript]: https://npm.im/@runtyped/typescript
 [@runtyped/type-compiler]: https://npm.im/@runtyped/type-compiler
+[https://github.com/runtyped/TypeScript]: https://github.com/runtyped/TypeScript
 [https://github.com/runtyped/runtyped]: https://github.com/runtyped/runtyped

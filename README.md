@@ -16,7 +16,32 @@ See [Relationship to Deepkit](#relationship-to-deepkit).
 - [Changelog](#changelog)
 - [License](#license)
 
-## How to use
+## Installation - TypeScript 7.x (Go)
+
+Ever since version 7.0, the TypeScript compiler is now written and maintained
+in the Go programming language rather than in TypeScript itself and published
+as standalone pre-compiled binaries. As such, the in-place patching approach 
+used by [@runtyped/type-compiler], inherited by `@deepkit/type-compiler`, does
+not work anymore. 
+
+For TypeScript 7.x we have created a patchset on top of the official compiler
+that extends the latter with runtime type reflection: [@runtyped/typescript].
+The patchset is maintained as a fork ([https://github.com/runtyped/TypeScript])
+and published as a drop-in replacement for the official `typescript` package:
+
+```sh
+# Replaces the official `typescript` package, indentical CLI API.
+# No need to run a separate patching script as required for older TypeScript
+# versions.
+npm i --dev @runtyped/typescript
+
+# Install @runtyped/type as a run-time dependency.
+npm i @runtyped/type
+```
+
+For more information see [@runtyped/typescript].
+
+## Installation - TypeScript 6.x
 
 Install `@runtyped/type-compiler` as a dev dependency and `@runtyped/type`
 as a regular dependency:
@@ -39,6 +64,8 @@ If `npx` is not available, run the script directly:
 ```sh
 ./node_modules/.bin/runtyped-install-transformer
 ```
+
+## Usage
 
 The full power of reflected types is now at your disposal:
 

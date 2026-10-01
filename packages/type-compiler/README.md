@@ -7,6 +7,13 @@ serialization and more.
 Started as a selective fork [Deepkit] focused on its type reflection capabilities.
 See [Relationship to Deepkit](https://github.com/runtyped/runtyped#relationship-to-deepkit).
 
+## TypeScript 7.x
+
+This package is not compatible with TypeScript 7.x and is only compatible with
+TypeScript versions up and including the 6.x series.
+
+Please use [@runtyped/typescript](https://npm.im/@runtyped/typescript).
+
 ## Introduction
 
 This package is the build-time companion to [@runtyped/type]. It provides a
