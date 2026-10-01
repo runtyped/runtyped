@@ -10,7 +10,10 @@ See [Relationship to Deepkit](#relationship-to-deepkit).
 
 ## Table of Contents
 
-- [How to use](#how-to-use)
+- [Installation - TypeScript 7.x (Go)](#installation---typescript-7x-go)
+- [Installation - TypeScript 6.x](#installation---typescript-6x)
+- [Usage](#usage)
+- [Versioning](#versioning)
 - [Documentation](#documentation)
 - [Relationship to Deepkit](#relationship-to-deepkit)
 - [Changelog](#changelog)
@@ -30,7 +33,7 @@ The patchset is maintained as a fork ([https://github.com/runtyped/TypeScript])
 and published as a drop-in replacement for the official `typescript` package:
 
 ```sh
-# Replaces the official `typescript` package, indentical CLI API.
+# Replaces the official `typescript` package, identical CLI API.
 # No need to run a separate patching script as required for older TypeScript
 # versions.
 npm i --dev @runtyped/typescript
@@ -39,7 +42,8 @@ npm i --dev @runtyped/typescript
 npm i @runtyped/type
 ```
 
-For more information see [@runtyped/typescript].
+For more information see [@runtyped/typescript] and [Versioning](#versioning)
+for how the versions of the Runtyped packages relate to each other.
 
 ## Installation - TypeScript 6.x
 
@@ -51,7 +55,7 @@ npm install --save-dev @runtyped/type-compiler
 npm install --save @runtyped/type
 ```
 
-The run the `runtyped-install-transformer` script to patch the TypeScript
+Then run the `runtyped-install-transformer` script to patch the TypeScript
 compiler with the Runtyped transformer, which makes reflected types
 available at runtime:
 
@@ -100,6 +104,50 @@ const type = typeOf<User>();
 // Convert type to JSON Schema
 const schema = toJsonSchema<User>();
 ```
+
+## Versioning
+
+The Runtyped packages follow different versioning strategies, because they
+answer to different dependencies.
+
+### @runtyped/typescript
+
+Versioning of `@runtyped/typescript` matches that of the upstream [typescript]
+package in its major and minor components, with the patch component reserved
+for runtyped itself. The base is the upstream `main` line at packaging time,
+which may be ahead of upstream's most recent published release.
+
+Example: `@runtyped/typescript@7.1.1` is built upon the `7.1` line of upstream
+[typescript] plus one runtyped patch.
+
+This scheme fits the compiler because its product is TypeScript parity: its
+version is the answer to "which TypeScript is this built on?".
+
+### @runtyped/type
+
+`@runtyped/type` follows its own semantic versioning, governed by the
+reflection format it consumes rather than by upstream TypeScript. The
+compiler's emitted reflection format only changes when runtyped changes it,
+which is independent of upstream TypeScript's release cadence: a new upstream
+minor does not, by itself, require a runtime release.
+
+The two packages answer to different axes of change — upstream TypeScript's
+evolution on one side, the reflection format's evolution on the other — and
+a single version number cannot carry breaking changes along both. Letting
+each package version its own axis keeps semantic versioning honest for both.
+
+### Compatibility
+
+The compatibility surface between the compiler and the runtime is the
+reflection format. Verified pairings:
+
+| @runtyped/typescript | @runtyped/type | Status                  |
+|----------------------|----------------|-------------------------|
+| 7.1.x                | 2.0.0          | verified in production  |
+
+Going forward we plan to express this coupling through `peerDependencies`
+ranges on both packages, so that the package manager itself refuses
+mismatched combinations; this table is the human-readable interim.
 
 ## Documentation
 
@@ -153,6 +201,7 @@ See [CHANGELOG.md](CHANGELOG.md) for a full list of changes.
 MIT (see [LICENSE](LICENSE))
 
 [DeepKit]: https://github.com/deepkit/deepkit
+[typescript]: https://www.npmjs.com/package/typescript
 [@runtyped/typescript]: https://npm.im/@runtyped/typescript
 [@runtyped/type-compiler]: https://npm.im/@runtyped/type-compiler
 [https://github.com/runtyped/TypeScript]: https://github.com/runtyped/TypeScript
