@@ -151,3 +151,9 @@ See [CHANGELOG.md](CHANGELOG.md) for a full list of changes.
 ## License
 
 MIT (see [LICENSE](LICENSE))
+
+[DeepKit]: https://github.com/deepkit/deepkit
+[@runtyped/typescript]: https://npm.im/@runtyped/typescript
+[@runtyped/type-compiler]: https://npm.im/@runtyped/type-compiler
+[https://github.com/runtyped/TypeScript]: https://github.com/runtyped/TypeScript
+[https://github.com/runtyped/runtyped]: https://github.com/runtyped/runtyped
