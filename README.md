@@ -126,10 +126,12 @@ emits, in lockstep with `@runtyped/type`:
   upstream TypeScript bumps the patch, so rebase releases remain visible to
   range-based dependency updates.
 
-The upstream TypeScript version the compiler is built upon is carried as
-build metadata, informational only: it never takes part in version
-precedence or range matching. Example:
-`@runtyped/typescript@2.0.0+typescript.7.1.0` is the first release of format
+The upstream TypeScript version the compiler is built upon is declared as
+build metadata and as a `typescriptBase` field in the package manifest —
+informational only, never part of version precedence or range matching. The
+npm registry strips build metadata from the published version listing, so
+the manifest field is the durable carrier. Example:
+`@runtyped/typescript@2.0.0+typescript.7.1` is the first release of format
 era 2, built on the `7.1` line of upstream [typescript] — upstream `main` at
 packaging time, which may be ahead of upstream's most recent published
 release.
@@ -158,7 +160,7 @@ reflection format. Verified pairings:
 
 | @runtyped/typescript   | @runtyped/type | Status                                              |
 |------------------------|----------------|-----------------------------------------------------|
-| 2.0.0+typescript.7.1.0 | 2.0.0          | first release of the scheme; identical emit to the pairing below |
+| 2.0.0+typescript.7.1  | 2.0.0          | first release of the scheme; identical emit to the pairing below |
 | 7.1.x (discontinued)   | 2.0.0          | verified in production                              |
 
 ## Documentation
