@@ -107,47 +107,59 @@ const schema = toJsonSchema<User>();
 
 ## Versioning
 
-The Runtyped packages follow different versioning strategies, because they
-answer to different dependencies.
+The Runtyped packages share one versioning scheme, built around the
+reflection format. The format is the axis runtyped owns and answers for;
+upstream TypeScript is the axis it tracks. Each package's version number
+encodes the axis its package owns, and the tracked axis is carried as
+metadata.
 
 ### @runtyped/typescript
 
-Versioning of `@runtyped/typescript` matches that of the upstream [typescript]
-package in its major and minor components, with the patch component reserved
-for runtyped itself. The base is the upstream `main` line at packaging time,
-which may be ahead of upstream's most recent published release.
+Versioning of `@runtyped/typescript` is aligned to the reflection format it
+emits, in lockstep with `@runtyped/type`:
 
-Example: `@runtyped/typescript@7.1.1` is built upon the `7.1` line of upstream
-[typescript] plus one runtyped patch.
+- **major** is the format era. It changes when and only when the reflection
+  format changes, together with `@runtyped/type`'s major.
+- **minor** carries format-compatible changes on either the compiler or the
+  runtime side, independently within an era.
+- **patch** carries fixes and upstream rebases. Every rebase onto a new
+  upstream TypeScript bumps the patch, so rebase releases remain visible to
+  range-based dependency updates.
 
-This scheme fits the compiler because its product is TypeScript parity: its
-version is the answer to "which TypeScript is this built on?".
+The upstream TypeScript version the compiler is built upon is carried as
+build metadata, informational only: it never takes part in version
+precedence or range matching. Example:
+`@runtyped/typescript@2.0.0+typescript.7.1.0` is the first release of format
+era 2, built on the `7.1` line of upstream [typescript] — upstream `main` at
+packaging time, which may be ahead of upstream's most recent published
+release.
+
+Because majors move in lockstep, the compatibility rule is simply: same
+major version means the same, compatible format era.
+
+`@runtyped/typescript` declares a `peerDependencies` requirement on
+[@runtyped/type] covering its era, so the package manager itself refuses
+mismatched combinations.
+
+The compiler's earlier 7.1.x line, which followed upstream TypeScript's
+version numbers, is discontinued and deprecated on npm.
 
 ### @runtyped/type
 
 `@runtyped/type` follows its own semantic versioning, governed by the
-reflection format it consumes rather than by upstream TypeScript. The
-compiler's emitted reflection format only changes when runtyped changes it,
-which is independent of upstream TypeScript's release cadence: a new upstream
-minor does not, by itself, require a runtime release.
-
-The two packages answer to different axes of change — upstream TypeScript's
-evolution on one side, the reflection format's evolution on the other — and
-a single version number cannot carry breaking changes along both. Letting
-each package version its own axis keeps semantic versioning honest for both.
+reflection format it consumes. Its major is the format era that the
+compiler's major moves with; a new upstream TypeScript minor does not, by
+itself, require a runtime release.
 
 ### Compatibility
 
 The compatibility surface between the compiler and the runtime is the
 reflection format. Verified pairings:
 
-| @runtyped/typescript | @runtyped/type | Status                  |
-|----------------------|----------------|-------------------------|
-| 7.1.x                | 2.0.0          | verified in production  |
-
-Going forward we plan to express this coupling through `peerDependencies`
-ranges on both packages, so that the package manager itself refuses
-mismatched combinations; this table is the human-readable interim.
+| @runtyped/typescript   | @runtyped/type | Status                                              |
+|------------------------|----------------|-----------------------------------------------------|
+| 2.0.0+typescript.7.1.0 | 2.0.0          | first release of the scheme; identical emit to the pairing below |
+| 7.1.x (discontinued)   | 2.0.0          | verified in production                              |
 
 ## Documentation
 
@@ -203,6 +215,7 @@ MIT (see [LICENSE](LICENSE))
 [DeepKit]: https://github.com/deepkit/deepkit
 [typescript]: https://www.npmjs.com/package/typescript
 [@runtyped/typescript]: https://npm.im/@runtyped/typescript
+[@runtyped/type]: https://npm.im/@runtyped/type
 [@runtyped/type-compiler]: https://npm.im/@runtyped/type-compiler
 [https://github.com/runtyped/TypeScript]: https://github.com/runtyped/TypeScript
 [https://github.com/runtyped/runtyped]: https://github.com/runtyped/runtyped
