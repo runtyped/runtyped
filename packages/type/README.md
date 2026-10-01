@@ -56,6 +56,14 @@ npm i --dev @runtyped/type-compiler
 npx runtyped-install-transformer
 ```
 
+## Versioning
+
+`@runtyped/type` follows its own semantic versioning, governed by the
+reflection format it consumes. The versioning of `@runtyped/typescript` — the
+compiler whose emitted reflection data this package reads — is aligned to it
+in lockstep: same major version means the same, compatible format era. See
+the [Runtyped versioning strategy] for the full scheme.
+
 ## Usage
 
 ```typescript
@@ -93,5 +101,6 @@ const schema = toJsonSchema<User>();
 [DeepKit]: https://github.com/deepkit/deepkit
 [@runtyped/typescript]: https://npm.im/@runtyped/typescript
 [@runtyped/type-compiler]: https://npm.im/@runtyped/type-compiler
+[Runtyped versioning strategy]: https://github.com/runtyped/runtyped#versioning
 [https://github.com/runtyped/TypeScript]: https://github.com/runtyped/TypeScript
 [https://github.com/runtyped/runtyped]: https://github.com/runtyped/runtyped

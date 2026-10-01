@@ -10,7 +10,10 @@ See [Relationship to Deepkit](#relationship-to-deepkit).
 
 ## Table of Contents
 
-- [How to use](#how-to-use)
+- [Installation - TypeScript 7.x (Go)](#installation---typescript-7x-go)
+- [Installation - TypeScript 6.x](#installation---typescript-6x)
+- [Usage](#usage)
+- [Versioning](#versioning)
 - [Documentation](#documentation)
 - [Relationship to Deepkit](#relationship-to-deepkit)
 - [Changelog](#changelog)
@@ -30,7 +33,7 @@ The patchset is maintained as a fork ([https://github.com/runtyped/TypeScript])
 and published as a drop-in replacement for the official `typescript` package:
 
 ```sh
-# Replaces the official `typescript` package, indentical CLI API.
+# Replaces the official `typescript` package, identical CLI API.
 # No need to run a separate patching script as required for older TypeScript
 # versions.
 npm i --dev @runtyped/typescript
@@ -39,7 +42,8 @@ npm i --dev @runtyped/typescript
 npm i @runtyped/type
 ```
 
-For more information see [@runtyped/typescript].
+For more information see [@runtyped/typescript] and [Versioning](#versioning)
+for how the versions of the Runtyped packages relate to each other.
 
 ## Installation - TypeScript 6.x
 
@@ -51,7 +55,7 @@ npm install --save-dev @runtyped/type-compiler
 npm install --save @runtyped/type
 ```
 
-The run the `runtyped-install-transformer` script to patch the TypeScript
+Then run the `runtyped-install-transformer` script to patch the TypeScript
 compiler with the Runtyped transformer, which makes reflected types
 available at runtime:
 
@@ -100,6 +104,62 @@ const type = typeOf<User>();
 // Convert type to JSON Schema
 const schema = toJsonSchema<User>();
 ```
+
+## Versioning
+
+The Runtyped packages share one versioning scheme, built around the
+reflection format. The format is the axis runtyped owns and answers for;
+upstream TypeScript is the axis it tracks. Each package's version number
+encodes the axis its package owns, and the tracked axis is carried as
+metadata.
+
+### @runtyped/typescript
+
+Versioning of `@runtyped/typescript` is aligned to the reflection format it
+emits, in lockstep with `@runtyped/type`:
+
+- **major** is the format era. It changes when and only when the reflection
+  format changes, together with `@runtyped/type`'s major.
+- **minor** carries format-compatible changes on either the compiler or the
+  runtime side, independently within an era.
+- **patch** carries fixes and upstream rebases. Every rebase onto a new
+  upstream TypeScript bumps the patch, so rebase releases remain visible to
+  range-based dependency updates.
+
+The upstream TypeScript version the compiler is built upon is carried as
+build metadata, informational only: it never takes part in version
+precedence or range matching. Example:
+`@runtyped/typescript@2.0.0+typescript.7.1.0` is the first release of format
+era 2, built on the `7.1` line of upstream [typescript] — upstream `main` at
+packaging time, which may be ahead of upstream's most recent published
+release.
+
+Because majors move in lockstep, the compatibility rule is simply: same
+major version means the same, compatible format era.
+
+`@runtyped/typescript` declares a `peerDependencies` requirement on
+[@runtyped/type] covering its era, so the package manager itself refuses
+mismatched combinations.
+
+The compiler's earlier 7.1.x line, which followed upstream TypeScript's
+version numbers, is discontinued and deprecated on npm.
+
+### @runtyped/type
+
+`@runtyped/type` follows its own semantic versioning, governed by the
+reflection format it consumes. Its major is the format era that the
+compiler's major moves with; a new upstream TypeScript minor does not, by
+itself, require a runtime release.
+
+### Compatibility
+
+The compatibility surface between the compiler and the runtime is the
+reflection format. Verified pairings:
+
+| @runtyped/typescript   | @runtyped/type | Status                                              |
+|------------------------|----------------|-----------------------------------------------------|
+| 2.0.0+typescript.7.1.0 | 2.0.0          | first release of the scheme; identical emit to the pairing below |
+| 7.1.x (discontinued)   | 2.0.0          | verified in production                              |
 
 ## Documentation
 
@@ -153,7 +213,9 @@ See [CHANGELOG.md](CHANGELOG.md) for a full list of changes.
 MIT (see [LICENSE](LICENSE))
 
 [DeepKit]: https://github.com/deepkit/deepkit
+[typescript]: https://www.npmjs.com/package/typescript
 [@runtyped/typescript]: https://npm.im/@runtyped/typescript
+[@runtyped/type]: https://npm.im/@runtyped/type
 [@runtyped/type-compiler]: https://npm.im/@runtyped/type-compiler
 [https://github.com/runtyped/TypeScript]: https://github.com/runtyped/TypeScript
 [https://github.com/runtyped/runtyped]: https://github.com/runtyped/runtyped
