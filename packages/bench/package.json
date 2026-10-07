@@ -1,6 +1,6 @@
 {
   "name": "@runtyped/bench",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Runtyped Bench",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,11 +14,11 @@
     "Jacopo Scazzosi <jacopo@scazzosi.com>"
   ],
   "dependencies": {
-    "@runtyped/type": "^2.0.0-alpha.3",
+    "@runtyped/type": "^2.0.1",
     "mitata": "^1.0.34"
   },
   "devDependencies": {
-    "@runtyped/type-compiler": "^2.0.0-alpha.3"
+    "@runtyped/type-compiler": "^2.0.1"
   },
   "license": "MIT"
 }
