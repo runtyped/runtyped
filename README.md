@@ -10,6 +10,7 @@ See [Relationship to Deepkit](#relationship-to-deepkit).
 
 ## Table of Contents
 
+- [Introduction](#introduction)
 - [Installation - TypeScript 7.x (Go)](#installation---typescript-7x-go)
 - [Installation - TypeScript 6.x](#installation---typescript-6x)
 - [Usage](#usage)
@@ -19,18 +20,29 @@ See [Relationship to Deepkit](#relationship-to-deepkit).
 - [Changelog](#changelog)
 - [License](#license)
 
+## Introduction
+
+Runtyped is comprised of the [@runtyped/type] runtime library and of a
+transformer function that is added on top of the official TypeScript compiler.
+The transformer serializes type information as regular JavaScript objects that
+the runtime library consumes within its helper functions.
+
+As the TypeScript compiler has moved to Go with version 7.0, Runtyped provides
+the transformer in two different forms, depending on the TypeScript version in
+use:
+
+- [@runtyped/type-compiler] is a package that injects a JavaScript
+  implementation of the transformer into the official TypeScript compiler, up
+  to the 6.x series, patching the `typescript` package in-place. As such, this
+  package must be installed alongside the official `typescript` package, which
+  provides the actual compiler.
+
+- [@runtyped/typescript] is a package that wraps a native implementation of the
+  transformer as a patchset to the official TypeScript compiler, starting with 
+  version 7.x onwards (written in Go). This package is maintained as a fork of
+  the official compiler and thus does not require the latter to be installed.
+
 ## Installation - TypeScript 7.x (Go)
-
-Ever since version 7.0, the TypeScript compiler is now written and maintained
-in the Go programming language rather than in TypeScript itself and published
-as standalone pre-compiled binaries. As such, the in-place patching approach 
-used by [@runtyped/type-compiler], inherited by `@deepkit/type-compiler`, does
-not work anymore. 
-
-For TypeScript 7.x we have created a patchset on top of the official compiler
-that extends the latter with runtime type reflection: [@runtyped/typescript].
-The patchset is maintained as a fork ([https://github.com/runtyped/TypeScript])
-and published as a drop-in replacement for the official `typescript` package:
 
 ```sh
 # Replaces the official `typescript` package, identical CLI API.
@@ -55,9 +67,9 @@ npm install --save-dev @runtyped/type-compiler
 npm install --save @runtyped/type
 ```
 
-Then run the `runtyped-install-transformer` script to patch the TypeScript
-compiler with the Runtyped transformer, which makes reflected types
-available at runtime:
+Then run the `runtyped-install-transformer` script to patch the local
+TypeScript compiler with the Runtyped transformer, which makes reflected
+types available at runtime:
 
 ```sh
 npx runtyped-install-transformer
@@ -68,6 +80,9 @@ If `npx` is not available, run the script directly:
 ```sh
 ./node_modules/.bin/runtyped-install-transformer
 ```
+
+For more information see [@runtyped/type-compiler] and [Versioning](#versioning)
+for how the versions of the Runtyped packages relate to each other.
 
 ## Usage
 
@@ -107,59 +122,24 @@ const schema = toJsonSchema<User>();
 
 ## Versioning
 
-The Runtyped packages share one versioning scheme, built around the
-reflection format. The format is the axis runtyped owns and answers for;
-upstream TypeScript is the axis it tracks. Each package's version number
-encodes the axis its package owns, and the tracked axis is carried as
-metadata.
-
-### @runtyped/typescript
-
-Versioning of `@runtyped/typescript` is aligned to the reflection format it
-emits, in lockstep with `@runtyped/type`:
+Runtyped packages share the same versioning scheme, built around the shared
+reflection format and [SemVer].
 
 - **major** is the format era. It changes when and only when the reflection
-  format changes, together with `@runtyped/type`'s major.
+  format changes.
+
 - **minor** carries format-compatible changes on either the compiler or the
   runtime side, independently within an era.
+
 - **patch** carries fixes and upstream rebases. Every rebase onto a new
-  upstream TypeScript bumps the patch, so rebase releases remain visible to
-  range-based dependency updates.
+  upstream TypeScript bumps the patch.
 
-The upstream TypeScript version the compiler is built upon is carried as
-build metadata, informational only: it never takes part in version
-precedence or range matching. Example:
-`@runtyped/typescript@2.0.0+typescript.7.1.0` is the first release of format
-era 2, built on the `7.1` line of upstream [typescript] — upstream `main` at
-packaging time, which may be ahead of upstream's most recent published
-release.
+Compatibility between [@runtyped/type] and the two transformer implementations
+[@runtyped/type-compiler] and [@runtyped/typescript] is guaranteed as long as
+the major version remains the same.
 
-Because majors move in lockstep, the compatibility rule is simply: same
-major version means the same, compatible format era.
-
-`@runtyped/typescript` declares a `peerDependencies` requirement on
-[@runtyped/type] covering its era, so the package manager itself refuses
-mismatched combinations.
-
-The compiler's earlier 7.1.x line, which followed upstream TypeScript's
-version numbers, is discontinued and deprecated on npm.
-
-### @runtyped/type
-
-`@runtyped/type` follows its own semantic versioning, governed by the
-reflection format it consumes. Its major is the format era that the
-compiler's major moves with; a new upstream TypeScript minor does not, by
-itself, require a runtime release.
-
-### Compatibility
-
-The compatibility surface between the compiler and the runtime is the
-reflection format. Verified pairings:
-
-| @runtyped/typescript   | @runtyped/type | Status                                              |
-|------------------------|----------------|-----------------------------------------------------|
-| 2.0.0+typescript.7.1.0 | 2.0.0          | first release of the scheme; identical emit to the pairing below |
-| 7.1.x (discontinued)   | 2.0.0          | verified in production                              |
+Additionally, [@runtyped/typescript] keeps the version of the upstream compiler
+it builds upon as the `runtyped.typescript` field in its `package.json`.
 
 ## Documentation
 
@@ -210,8 +190,12 @@ See [CHANGELOG.md](CHANGELOG.md) for a full list of changes.
 
 ## License
 
-MIT (see [LICENSE](LICENSE))
+[@runtyped/typescript] is released under the APACHE 2.0 license, the same
+license used upstream by the official [typescript] package.
 
+All other packages are released under the MIT license (see [LICENSE](LICENSE)).
+
+[SemVer]: https://semver.org
 [DeepKit]: https://github.com/deepkit/deepkit
 [typescript]: https://www.npmjs.com/package/typescript
 [@runtyped/typescript]: https://npm.im/@runtyped/typescript

@@ -19,17 +19,6 @@ Check the documentation at [https://github.com/runtyped/runtyped].
 
 ## Installation - TypeScript 7.x (Go)
 
-Ever since version 7.0, the TypeScript compiler is now written and maintained
-in the Go programming language rather than in TypeScript itself and published
-as standalone pre-compiled binaries. As such, the in-place patching approach 
-used by [@runtyped/type-compiler], inherited by `@deepkit/type-compiler`, does
-not work anymore. 
-
-For TypeScript 7.x we have created a patchset on top of the official compiler
-that extends the latter with runtime type reflection: [@runtyped/typescript].
-The patchset is maintained as a fork ([https://github.com/runtyped/TypeScript])
-and published as a drop-in replacement for the official `typescript` package:
-
 ```sh
 # Replaces the official `typescript` package, indentical CLI API.
 # No need to run a separate patching script as required for older TypeScript
@@ -39,8 +28,6 @@ npm i --dev @runtyped/typescript
 # Install @runtyped/type as a run-time dependency.
 npm i @runtyped/type
 ```
-
-For more information see [@runtyped/typescript].
 
 ## Installation - TypeScript 6.x
 
@@ -55,14 +42,6 @@ npm i --dev @runtyped/type-compiler
 # `./node_modules/.bin/runtyped-install-transformer`.
 npx runtyped-install-transformer
 ```
-
-## Versioning
-
-`@runtyped/type` follows its own semantic versioning, governed by the
-reflection format it consumes. The versioning of `@runtyped/typescript` — the
-compiler whose emitted reflection data this package reads — is aligned to it
-in lockstep: same major version means the same, compatible format era. See
-the [Runtyped versioning strategy] for the full scheme.
 
 ## Usage
 
@@ -97,6 +76,14 @@ const type = typeOf<User>();
 // Convert type to JSON Schema
 const schema = toJsonSchema<User>();
 ```
+
+## Versioning
+
+See the [Runtyped versioning strategy] for details.
+
+## License
+
+MIT (see [LICENSE](LICENSE)).
 
 [DeepKit]: https://github.com/deepkit/deepkit
 [@runtyped/typescript]: https://npm.im/@runtyped/typescript
