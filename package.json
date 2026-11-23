@@ -1,34 +1,52 @@
 {
-  "name": "root",
-  "repository": "https://github.com/runtyped/runtyped",
+  "name": "@runtyped/type",
+  "version": "2.0.1",
+  "description": "@runtyped/type, the fastest universal TypeScript serializer and validator with JIT engine for frontend, backend, http-transport, RPC, and database, with built-in validations, for Browser/NodeJS.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist/index.*",
+    "dist/src/"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/runtyped/runtyped.git"
+  },
   "authors": [
     "Marc J. Schmidt <marc@marcjschmidt.de>",
     "Jacopo Scazzosi <jacopo@scazzosi.com>"
   ],
   "license": "MIT",
-  "private": true,
   "scripts": {
-    "bench": "node --expose-gc packages/bench/dist/index.js",
-    "test": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test 'packages/*/dist/tests/**/*.spec.js'",
-    "test:coverage": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test --experimental-test-coverage 'packages/*/dist/tests/**/*.spec.js'",
-    "build": "node node_modules/@runtyped/typescript/bin/tsc.js --build tsconfig.json",
-    "tsc": "node node_modules/@runtyped/typescript/bin/tsc.js --build tsconfig.json",
-    "tsc-watch": "node node_modules/@runtyped/typescript/bin/tsc.js --build --watch tsconfig.json",
+    "build": "tsc -p tsconfig.json",
+    "tsc-watch": "tsc -p tsconfig.json --watch",
+    "test": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test 'dist/tests/**/*.spec.js'",
+    "test:coverage": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test --experimental-test-coverage 'dist/tests/**/*.spec.js'",
+    "bench": "node --expose-gc dist/bench/index.js",
     "clean:all": "npm run clean:dist && npm run clean:modules && npm run clean:lock",
-    "clean:modules": "rm -rf packages/*/node_modules; rm -rf node_modules",
-    "clean:lock": "rm -rf packages/*/package-lock.json; rm -rf package-lock.json",
-    "clean:dist": "rm -rf packages/*/dist && rm -rf packages/*/.tsbuildinfo"
+    "clean:modules": "rm -rf node_modules",
+    "clean:lock": "rm -rf package-lock.json",
+    "clean:dist": "rm -rf dist"
   },
-  "workspaces": [
-    "packages/*"
-  ],
+  "dependencies": {
+    "camelcase": "^9.0.0",
+    "to-fast-properties": "^4.0.0",
+    "uuid": "^14.0.0"
+  },
   "devDependencies": {
     "@runtyped/typescript": "2.1.1",
+    "@types/chai": "^5.2.3",
     "@types/node": "^25.8.0",
-    "typescript": "^6.0.3"
+    "chai": "^6.2.2",
+    "mitata": "^1.0.34"
   },
   "engines": {
     "node": ">= 20.0.0"
   },
-  "version": "2.0.0"
+  "keywords": ["validation", "reflection", "runtime", "types", "runtyped", "typescript"]
 }

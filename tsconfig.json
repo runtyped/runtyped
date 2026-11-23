@@ -1,23 +1,28 @@
 {
-  "files": [],
-  "references": [
-    {
-      "path": "./packages/bench/tsconfig.json"
-    },
-    {
-      "path": "./packages/core/tsconfig.json"
-    },
-    {
-      "path": "./packages/type/tsconfig.json"
-    },
-    {
-      "path": "./packages/type-compiler/tsconfig.json"
-    },
-    {
-      "path": "./packages/type-spec/tsconfig.json"
-    },
-    {
-      "path": "./packages/expect/tsconfig.json"
-    },
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "esModuleInterop": true,
+    "declaration": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "rootDir": ".",
+    "outDir": "./dist",
+    "types": [
+      "node"
+    ]
+  },
+  "reflection": true,
+  "include": [
+    "index.ts",
+    "src",
+    "tests",
+    "bench"
   ]
 }
