@@ -11,15 +11,17 @@ The system is split into two distinct phases: **Compilation (Build-time)** and *
 ---
 
 ## 1. The Compilation Phase (The Architect)
-**Location:** `packages/type-compiler/`
+**Location:** `tsc/internal/transformers/runtyped/` in [runtyped/TypeScript], published as [@runtyped/typescript]
 
-The compiler is a TypeScript Transformer. It intercepts the compilation process and performs the "distillation" of types. It is injected into the TypeScript compiler via a patch to `tsc.js` (the `//runtyped_patch_patchGetTransformers` block) that registers the `ReflectionTransformer` as a `before` transformer.
+The compiler is a fork of the official TypeScript 7.x compiler, which is written in Go. Runtyped adds a reflection transformer to its emit pipeline: `tsc/internal/compiler/emitter.go` appends `runtyped.NewReflectionTransformerWithConfig` to the script transformers, so it runs before type annotations are erased, and passes emitted declaration files through `runtyped.NewDeclarationTransformer`. Nothing has to be patched or registered: compiling with this `tsc` is the opt-in.
+
+> Up to Runtyped 2.x, the same bytecode was produced by `@runtyped/type-compiler`, a transformer written in TypeScript that was injected into the official `typescript` package (up to 6.x) by patching `tsc.js`. It is deprecated; the Go transformer was ported from it and its emit is pinned against it by `ts6_parity_test.go`.
 
 ### Key Workflow:
-1.  **AST Traversal**: The compiler walks the TypeScript Abstract Syntax Tree (AST).
+1.  **AST Traversal**: The transformer walks the TypeScript Abstract Syntax Tree (AST).
 2.  **Type Extraction**: It identifies interfaces, classes, unions, and other type constructs.
 3.  **Bytecode Generation**: It converts these high-level constructs into a highly compressed sequence of `ReflectionOp` instructions (the "bytecode").
-4.  **Injection**: The compiler injects this bytecode and the associated metadata (the "payload") into the emitted JavaScript code as a `static __type` array on classes and a `__type` array on functions.
+4.  **Injection**: It injects this bytecode and the associated metadata (the "payload") into the emitted JavaScript code as a `static __type` array on classes, a `__type` array on functions and `__Ω`-prefixed arrays for type aliases and interfaces. The declaration transformer adds matching `__Ω` declarations to `.d.ts` files.
 
 ### Member Deduplication (Build-Time)
 
@@ -32,17 +34,20 @@ class Message extends ComposedMessage {
 }
 ```
 
-The compiler's deduplication logic at `compiler.ts:~1875` uses a combined key of **(name, static flag)** rather than name alone. This ensures both the static `type` and the instance `type` are preserved in the bytecode, each with the correct `static` modifier flag. Without this distinction, one member would be silently dropped — and since `useDefineForClassFields` (see below) enforces static-before-instance declaration order, the instance version would always be the one dropped, making it invisible to the serializer.
+The compiler's deduplication logic in `extractClass` (`compiler.go`) uses a combined key of **(name, static flag)** rather than name alone; of several members sharing a key (method overloads and their implementation), only the first is reflected. This ensures both the static `type` and the instance `type` are preserved in the bytecode, each with the correct `static` modifier flag. Without this distinction, one member would be silently dropped — and since `useDefineForClassFields` (see below) enforces static-before-instance declaration order, the instance version would always be the one dropped, making it invisible to the serializer.
 
-**Key Files:**
-- `src/compiler.ts`: The heart of the transformation logic. Member processing at line ~1875, property handling at ~2110.
-- `src/reflection-ast.ts`: Utilities for translating TS AST nodes into the internal reflection model.
-- `install-transformer.ts`: Patches `tsc.js` to inject the transformer at build time.
+**Key Files** (in `tsc/internal/transformers/runtyped/`):
+- `runtyped.go`: The transformer entry point (`NewReflectionTransformerWithConfig`). Visits classes, functions, type aliases, interfaces and imports, and emits `__type`/`__Ω`.
+- `compiler.go`: The heart of the type-to-bytecode translation (the `typeCompiler`). Member processing in `extractClass`, property handling in `extractPropertyDeclaration`.
+- `program.go`: The bytecode program under construction: stack, frames and op codes.
+- `ops.go`: The `ReflectionOp` codes, mirroring `src/type-spec/type.ts` of @runtyped/type, and `encodeOps`.
+- `declaration_transformer.go`: Adds `__Ω` declarations to emitted `.d.ts` files.
+- `reflection_config.go`, `config/` and `jsdoc.go`: The `reflection` field of `tsconfig.json` and the `@reflection` JSDoc tag.
 
 ---
 
 ## 2. The Execution Phase (The Engine)
-**Location:** `packages/type/` and `packages/core/`
+**Location:** `src/` in [@runtyped/type], with internal utilities in `src/core/`
 
 The runtime is a stack-based Virtual Machine designed to "run" the injected bytecode.
 
@@ -62,7 +67,7 @@ When you call `typeOf<T>()`, the engine uses the bytecode as a **factory specifi
 
 ### Member Deduplication (Run-Time)
 
-The processor mirrors the compiler's deduplication logic in the `ReflectionOp.class` handler (`processor.ts:~605`). When reconstructing type objects from bytecode, properties with the same (name, static) pair replace earlier entries. This is essential because:
+The processor mirrors the compiler's deduplication logic in the `ReflectionOp.class` handler (`processor.ts:~581`). When reconstructing type objects from bytecode, properties with the same (name, static) pair replace earlier entries. This is essential because:
 
 1. **Inheritance**: A child class may override a parent property with different flags (e.g., changing visibility or adding `optional`). The processor keeps the most recently encountered version.
 2. **Consistency with the compiler**: The processor must interpret the bytecode the same way the compiler intended. If deduplication keys diverged between the two phases, the runtime type tree would not match the source code.
@@ -70,10 +75,10 @@ The processor mirrors the compiler's deduplication logic in the `ReflectionOp.cl
 This dual-phase deduplication — compiler and processor using the same logical key — represents a key architectural invariant: the bytecode is not self-describing; it relies on the processor sharing the compiler's interpretation rules. Each `ReflectionOp` carries implicit semantics that both sides must agree on.
 
 **Key Files:**
-- `packages/type/src/reflection/processor.ts`: The core VM loop (the `Processor` class) that manages the stack, frames, and instruction execution. Member deduplication at ~605.
-- `packages/type/src/reflection/reflection.ts`: The public API (`typeOf`, `reflect`, `ReflectionClass`) that interfaces with the Processor.
-- `packages/core/src/jit.ts`: The JIT builder (`Builder` class) that constructs expression trees for serializer code generation. Supports both bytecode VM (interpreter) and JIT compilation with tiered execution.
-- `packages/type-spec/`: Defines the formal `ReflectionOp` opcodes and the structural specification.
+- `src/reflection/processor.ts`: The core VM loop (the `Processor` class) that manages the stack, frames, and instruction execution. Member deduplication at ~581.
+- `src/reflection/reflection.ts`: The public API (`typeOf`, `reflect`, `ReflectionClass`) that interfaces with the Processor.
+- `src/core/jit.ts`: The JIT builder (`Builder` class) that constructs expression trees for serializer code generation. Supports both bytecode VM (interpreter) and JIT compilation with tiered execution.
+- `src/type-spec/type.ts`: Defines the formal `ReflectionOp` opcodes and the structural specification. The compiler's `ops.go` must be kept in sync with it.
 
 ---
 
@@ -87,44 +92,60 @@ Consider the `Message` class from the member deduplication example above. With `
 static __type = [
     () => ComposedMessage,                        // [0] base class reference
     'type',                                       // [1] property name
-    function () { return 'my-id'; },              // [2] default value
-    'routingKeys',                                // [3] property name
-    'endpoint',                                   // [4] property name
-    'Message',                                    // [5] class name
-    'P7!&3"9s>#&F3$8&3%85w\''                    // [6] encoded ops
+    function () { return 'my-id'; },              // [2] default value (static type)
+    function () { return Message.type; },         // [3] default value (instance type)
+    'routingKeys',                                // [4] property name
+    'endpoint',                                   // [5] property name
+    'Message',                                    // [6] class name
+    'P7!&3"9s>#&3"9>$&3%8&3&85w\''              // [7] encoded ops
 ];
 ```
 
-Decoding the ops string (each character's charCode minus 33):
+This is the output of `@runtyped/typescript` for:
+
+```ts
+class Message extends ComposedMessage {
+    public static readonly type = 'my-id';
+    public readonly type: string = Message.type;
+    routingKeys?: string;
+    endpoint?: string;
+}
+```
+
+Decoding the ops string (each character's charCode minus 33; characters that are arguments of the preceding op are stack indices):
 
 | Offset | Code | Opcode | Meaning |
 |--------|------|--------|---------|
 | 0 | 47 | `frame` | Create new stack frame |
 | 1 | 22 | `classReference` | Reference base class at stack[0] |
 | 3 | 5 | `string` | Push string type |
-| 4 | 18 | `property` | Pop type, create property with name from stack[1] |
+| 4 | 18 | `property` | Pop type, create property with name from stack[1] (`type`) |
 | 6 | 24 | `readonly` | Mark property readonly |
 | 7 | 82 | `static` | **Mark property static** |
 | 8 | 29 | `defaultValue` | Assign default from stack[2] |
-| 9 | 2 | `unknown` | Type for next property (inferred from initializer) |
 | 10 | 5 | `string` | Push string type |
-| 11 | 18 | `property` | Pop type, create property with name from stack[3] |
-| 13 | 23 | `optional` | Mark property optional |
-| 14 | 5 | `string` | Push string type |
-| 15 | 18 | `property` | Pop type, create property with name from stack[4] |
-| 17 | 23 | `optional` | Mark property optional |
-| 18 | 20 | `class` | Pop frame, construct class type |
+| 11 | 18 | `property` | Pop type, create property with name from stack[1] (`type` again) |
+| 13 | 24 | `readonly` | Mark property readonly |
+| 14 | 29 | `defaultValue` | Assign default from stack[3] |
+| 16 | 5 | `string` | Push string type |
+| 17 | 18 | `property` | Pop type, create property with name from stack[4] (`routingKeys`) |
+| 19 | 23 | `optional` | Mark property optional |
+| 20 | 5 | `string` | Push string type |
+| 21 | 18 | `property` | Pop type, create property with name from stack[5] (`endpoint`) |
+| 23 | 23 | `optional` | Mark property optional |
+| 24 | 20 | `class` | Pop frame, construct class type |
+| 25 | 86 | `typeName` | Name the type after stack[6] (`Message`) |
 
-Notice the `static` flag at offset 7: this marks the first `type` property (the static one). The second `property` op (offset 11, for `routingKeys`) does not have `static` — it's an instance property. The processor uses the same (name, static) key to keep them separate during reconstruction, and `isPropertyMemberType()` filters out the static one during serialization.
+Notice the `static` flag at offset 7: this marks the first `type` property (the static one). The second `property` op for `type` (offset 11) does not have `static` — it's the instance property. The processor uses the same (name, static) key to keep them separate during reconstruction, and `isPropertyMemberType()` filters out the static one during serialization.
 
-**Encoding function** (`processor.ts:83`):
+**Encoding function** (`processor.ts:83` at runtime, `encodeOps` in `ops.go` in the compiler):
 ```ts
 export function encodeOps(ops: ReflectionOp[]): string {
     return ops.map(v => String.fromCharCode(v + 33)).join('');
 }
 ```
 
-The constraint of fitting all opcodes in 93 values (charCode 33-126, the printable ASCII range) is explicitly documented in `type-spec/src/type.ts`:
+The constraint of fitting all opcodes in 93 values (charCode 33-126, the printable ASCII range) is explicitly documented in `src/type-spec/type.ts`:
 
 > Should not be greater than 93 members, because we encode it via charCode starting at 33.
 
@@ -132,9 +153,9 @@ The constraint of fitting all opcodes in 93 values (charCode 33-126, the printab
 
 ## 4. The Serializer: Where Reflection Meets Data Transformation
 
-**Location:** `packages/type/src/serializer/`
+**Location:** `src/serializer/`
 
-The serializer bridges the reflection type system and actual data transformation. It uses the `Type` objects produced by the processor to generate optimized serialization/deserialization functions via the JIT builder (`packages/core/src/jit.ts`).
+The serializer bridges the reflection type system and actual data transformation. It uses the `Type` objects produced by the processor to generate optimized serialization/deserialization functions via the JIT builder (`src/core/jit.ts`).
 
 ### The `static` Flag and Serialization
 
@@ -165,7 +186,7 @@ Runtyped targets ES2022 semantics. The serializer's property-presence check (`b.
 
 ### Null/Undefined Semantics
 
-JSON cannot represent `undefined` — `JSON.stringify` silently drops undefined values. Runtyped uses `null` as a transport-level sentinel for explicitly-set `undefined` on optional fields. The serializer's `buildIncrementalPropBody` function (`handlers.ts:~2553`) implements a three-way distinction:
+JSON cannot represent `undefined` — `JSON.stringify` silently drops undefined values. Runtyped uses `null` as a transport-level sentinel for explicitly-set `undefined` on optional fields. The serializer's `buildIncrementalPropBody` function (`handlers.ts:~2545`) implements a three-way distinction:
 
 | Property type | Key absent | Key present, value `undefined` | Key present, value `null` |
 |---|---|---|---|
@@ -179,10 +200,10 @@ The `null` output for present-but-undefined optional fields is **intentional**: 
 This means `serializeToJson(instance) !== instance` when the instance has optional fields with `undefined` values — the serialized output uses `null` as the JSON-safe representation. The `roundTrip()` function (serialize then deserialize) provides full fidelity: `null → undefined` on the deserialization side.
 
 **Key Files:**
-- `packages/type/src/serializer/handlers.ts`: Core serialization/deserialization logic. `buildObjectLiteralBody` at ~2400, `buildIncrementalPropBody` at ~2548, `deserializeClass` at ~2923.
-- `packages/type/src/serializer/serializer.ts`: JIT-based function generation and caching.
-- `packages/type/src/serializer-facade.ts`: Public API (`serialize`, `deserialize`, `cast`, `roundTrip`).
-- `packages/type/src/reflection/type.ts`: `isPropertyMemberType()` at line 597 — the gate between reflection and serialization.
+- `src/serializer/handlers.ts`: Core serialization/deserialization logic. `buildObjectLiteralBody` at ~2399, `buildIncrementalPropBody` at ~2545, `deserializeClass` at ~2923.
+- `src/serializer/serializer.ts`: JIT-based function generation and caching.
+- `src/serializer-facade.ts`: Public API (`serialize`, `deserialize`, `cast`, `roundTrip`).
+- `src/reflection/type.ts`: `isPropertyMemberType()` at line 597 — the gate between reflection and serialization.
 
 ---
 
@@ -216,4 +237,8 @@ These are the implicit contracts that must hold across the system. Violating any
 
 ---
 
-*Document prepared by [Sage](https://treesandrobots.com/2026/03/sage-the-harmonic-selector.html). Updated June 2026 to document the `useDefineForClassFields` ES2022 transition, member deduplication invariant, bytecode encoding details, and serializer null/undefined semantics.*
+*Document prepared by [Sage](https://treesandrobots.com/2026/03/sage-the-harmonic-selector.html). Updated June 2026 to document the `useDefineForClassFields` ES2022 transition, member deduplication invariant, bytecode encoding details, and serializer null/undefined semantics. Updated November 2026 for the move to the Go compiler, @runtyped/typescript, and the single-package layout.*
+
+[@runtyped/type]: https://npm.im/@runtyped/type
+[@runtyped/typescript]: https://npm.im/@runtyped/typescript
+[runtyped/TypeScript]: https://github.com/runtyped/TypeScript
