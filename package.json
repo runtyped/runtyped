@@ -39,7 +39,7 @@
     "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "@runtyped/typescript": "3.0.0",
+    "@runtyped/typescript": "3.0.1",
     "@types/chai": "^5.2.3",
     "@types/node": "^25.8.0",
     "chai": "^6.2.2",
