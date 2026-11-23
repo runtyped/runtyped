@@ -2,7 +2,7 @@
 ## Runtyped
 
 TypeScript types disappear at runtime. Runtyped changes that, preserving types
-at runtime via a compiler plugin. Define your types once and use them everywhere.
+at runtime via a fork of the TypeScript compiler. Define your types once and use them everywhere.
 No schema duplication. Just TypeScript. 
 
 Started as a selective fork [Deepkit] focused on its type reflection capabilities.
@@ -11,9 +11,9 @@ See [Relationship to Deepkit](#relationship-to-deepkit).
 ## Table of Contents
 
 - [Introduction](#introduction)
-- [Installation - TypeScript 7.x (Go)](#installation---typescript-7x-go)
-- [Installation - TypeScript 6.x](#installation---typescript-6x)
+- [Installation](#installation)
 - [Usage](#usage)
+- [TypeScript 6.x and @runtyped/type-compiler](#typescript-6x-and-runtypedtype-compiler)
 - [Versioning](#versioning)
 - [Documentation](#documentation)
 - [Relationship to Deepkit](#relationship-to-deepkit)
@@ -22,67 +22,32 @@ See [Relationship to Deepkit](#relationship-to-deepkit).
 
 ## Introduction
 
-Runtyped is comprised of the [@runtyped/type] runtime library and of a
-transformer function that is added on top of the official TypeScript compiler.
-The transformer serializes type information as regular JavaScript objects that
-the runtime library consumes within its helper functions.
+Runtyped is comprised of two packages:
 
-As the TypeScript compiler has moved to Go with version 7.0, Runtyped provides
-the transformer in two different forms, depending on the TypeScript version in
-use:
+- [@runtyped/typescript], a fork of the official TypeScript 7.x compiler
+  (written in Go) that serializes type information as regular JavaScript
+  values in its output. It is a drop-in replacement for the [typescript]
+  package, with the same CLI, and does not require the latter to be
+  installed.
 
-- [@runtyped/type-compiler] is a package that injects a JavaScript
-  implementation of the transformer into the official TypeScript compiler, up
-  to the 6.x series, patching the `typescript` package in-place. As such, this
-  package must be installed alongside the official `typescript` package, which
-  provides the actual compiler.
+- [@runtyped/type], the runtime library that consumes those values to provide
+  type-driven validation, serialization, JSON Schema generation and full
+  runtime reflection.
 
-- [@runtyped/typescript] is a package that wraps a native implementation of the
-  transformer as a patchset to the official TypeScript compiler, starting with 
-  version 7.x onwards (written in Go). This package is maintained as a fork of
-  the official compiler and thus does not require the latter to be installed.
-
-## Installation - TypeScript 7.x (Go)
+## Installation
 
 ```sh
 # Replaces the official `typescript` package, identical CLI API.
-# No need to run a separate patching script as required for older TypeScript
-# versions.
-npm i --dev @runtyped/typescript
+npm i --save-dev @runtyped/typescript
 
 # Install @runtyped/type as a run-time dependency.
-npm i @runtyped/type
+npm i --save @runtyped/type
 ```
 
-For more information see [@runtyped/typescript] and [Versioning](#versioning)
-for how the versions of the Runtyped packages relate to each other.
-
-## Installation - TypeScript 6.x
-
-Install `@runtyped/type-compiler` as a dev dependency and `@runtyped/type`
-as a regular dependency:
-
-```bash
-npm install --save-dev @runtyped/type-compiler
-npm install --save @runtyped/type
-```
-
-Then run the `runtyped-install-transformer` script to patch the local
-TypeScript compiler with the Runtyped transformer, which makes reflected
-types available at runtime:
-
-```sh
-npx runtyped-install-transformer
-```
-
-If `npx` is not available, run the script directly:
-
-```sh
-./node_modules/.bin/runtyped-install-transformer
-```
-
-For more information see [@runtyped/type-compiler] and [Versioning](#versioning)
-for how the versions of the Runtyped packages relate to each other.
+Then compile as usual with `tsc`. Every file is reflected by default; see
+[@runtyped/typescript] for how to narrow that down through the `reflection`
+field in `tsconfig.json`. See [Versioning](#versioning) for how the versions
+of the two packages relate to each other.
 
 ## Usage
 
@@ -120,13 +85,40 @@ const type = typeOf<User>();
 const schema = toJsonSchema<User>();
 ```
 
+## TypeScript 6.x and @runtyped/type-compiler
+
+> [!WARNING]
+> [@runtyped/type-compiler] and support for TypeScript 6.x and earlier are
+> **deprecated** as of Runtyped 3.0.0.
+
+Up to version 2.x, Runtyped also shipped [@runtyped/type-compiler], a
+JavaScript implementation of the transformer that patched the official
+`typescript` package in place (up to the 6.x series). With TypeScript itself
+moving to Go, that transformer has no future, and [@runtyped/typescript] now
+covers everything it did.
+
+- Projects on TypeScript 6.x can keep using [@runtyped/type-compiler] 2.x
+  together with [@runtyped/type] 2.x, which remain available on npm but will
+  not receive further updates.
+- [@runtyped/type] 3.x and later require [@runtyped/typescript].
+- `@runtyped/core`, `@runtyped/type-spec` and `@runtyped/expect` have been
+  merged into [@runtyped/type] and are deprecated as well. The parts of
+  `@runtyped/core` that the public API depends on (`ClassType`,
+  `AbstractClassType`, `ExtractClassType`, `TypeAnnotation`, `RuntypedError`,
+  `Builder`, `Ref`, `VarRef`) are now exported by [@runtyped/type].
+
+See the [3.0.0 entry in the changelog](CHANGELOG.md) for migration notes.
+
 ## Versioning
 
 Runtyped packages share the same versioning scheme, built around the shared
 reflection format and [SemVer].
 
-- **major** is the format era. It changes when and only when the reflection
-  format changes.
+- **major** is the format era. It changes whenever the reflection format
+  changes. It may also change, for all packages at once, to mark breaking
+  changes of other kinds: 3.0.0 is such a release, which drops
+  [@runtyped/type-compiler] and merges the auxiliary packages into
+  [@runtyped/type] without changing the format.
 
 - **minor** carries format-compatible changes on either the compiler or the
   runtime side, independently within an era.
@@ -134,12 +126,30 @@ reflection format and [SemVer].
 - **patch** carries fixes and upstream rebases. Every rebase onto a new
   upstream TypeScript bumps the patch.
 
-Compatibility between [@runtyped/type] and the two transformer implementations
-[@runtyped/type-compiler] and [@runtyped/typescript] is guaranteed as long as
-the major version remains the same.
+Compatibility between [@runtyped/type] and [@runtyped/typescript] is
+guaranteed as long as the major version remains the same.
 
-Additionally, [@runtyped/typescript] keeps the version of the upstream compiler
-it builds upon as the `runtyped.typescript` field in its `package.json`.
+Additionally, [@runtyped/typescript] records the upstream compiler it builds
+upon in the `runtyped.typescript` field of its `package.json`:
+
+```json
+"runtyped": {
+  "typescript": {
+    "version": "7.1",
+    "commit": "6161772c1370bdd4a82f808e6823bd755eb1870d",
+    "date": "2026-10-30T22:12:03Z"
+  }
+}
+```
+
+- `version` is the upstream release line.
+- `commit` is the commit of [microsoft/TypeScript]'s `main` branch that the
+  fork is based on, i.e. the most recent upstream commit it includes.
+- `date` is that commit's date.
+
+Upstream's `main` branch carries a `-dev` version in its source code, with
+the actual version of each build stamped in at publish time, so the commit
+and date are the reliable way to tell which upstream code a release includes.
 
 ## Documentation
 
@@ -190,14 +200,15 @@ See [CHANGELOG.md](CHANGELOG.md) for a full list of changes.
 
 ## License
 
+[@runtyped/type] is released under the MIT license (see [LICENSE](LICENSE)).
+
 [@runtyped/typescript] is released under the APACHE 2.0 license, the same
 license used upstream by the official [typescript] package.
-
-All other packages are released under the MIT license (see [LICENSE](LICENSE)).
 
 [SemVer]: https://semver.org
 [DeepKit]: https://github.com/deepkit/deepkit
 [typescript]: https://www.npmjs.com/package/typescript
+[microsoft/TypeScript]: https://github.com/microsoft/TypeScript
 [@runtyped/typescript]: https://npm.im/@runtyped/typescript
 [@runtyped/type]: https://npm.im/@runtyped/type
 [@runtyped/type-compiler]: https://npm.im/@runtyped/type-compiler

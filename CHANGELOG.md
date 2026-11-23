@@ -2,6 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] - **`3.0.0`** - One compiler, one package
+
+This release completes the move to [@runtyped/typescript], the fork of the
+Go-based TypeScript 7.x compiler, and consolidates the repository into a
+single [@runtyped/type] package. The reflection format is unchanged; the
+major bump marks the breaking changes below, and [@runtyped/typescript] is
+bumped to 3.0.0 alongside so that matching majors keep meaning compatible
+packages (see [Versioning](./README.md#versioning)).
+
+- DEPRECATED: [@runtyped/type-compiler], the JavaScript transformer that
+  patched the official `typescript` package, together with support for
+  TypeScript 6.x and earlier. [@runtyped/type] 3.x requires
+  [@runtyped/typescript]. Projects that must stay on TypeScript 6.x can keep
+  using [@runtyped/type-compiler] 2.x with [@runtyped/type] 2.x, which will
+  not receive further updates.
+- DEPRECATED: `@runtyped/core`, `@runtyped/type-spec` and `@runtyped/expect`.
+  Their code now lives inside [@runtyped/type] as internal modules
+  (`expect` only as a test helper).
+- BREAKING: `@runtyped/core` was pruned down to what type reflection needs,
+  dropping the modules and functions inherited from Deepkit that nothing
+  used (buffers, decorators, event emitter, enums, networking, process
+  locks, reactive helpers, timers, path and URL helpers, among others) and
+  the `dot-prop` dependency. What the public API depends on is now exported
+  by [@runtyped/type]: `ClassType`, `AbstractClassType`, `ExtractClassType`,
+  `TypeAnnotation`, `RuntypedError`, `Builder`, `Ref` and `VarRef`.
+- Parity: the test suite previously exercising [@runtyped/type-compiler]
+  now runs against [@runtyped/typescript], whose 2.1.x releases fixed about
+  twenty differences in emitted reflection data between the two compilers.
+
+### Migrating from 2.x
+
+1. Replace `typescript` and `@runtyped/type-compiler` with
+   `@runtyped/typescript` in your dev dependencies, and drop any call to
+   `runtyped-install-transformer`. `tsc` keeps the same CLI.
+2. Check the `reflection` field of your `tsconfig.json`. Without it,
+   [@runtyped/type-compiler] reflected nothing, while [@runtyped/typescript]
+   reflects every file. Set `"reflection": false` (or `"never"`) to keep the
+   old behaviour, or narrow it down with `"explicit"` or a list of globs.
+3. Replace imports from `@runtyped/core` with imports from `@runtyped/type`.
+   Imports of `@runtyped/type-spec` and `@runtyped/expect` have no public
+   replacement.
+4. Bundler and runtime integrations based on the JavaScript transformer, such
+   as its loader for Vite, Bun or esbuild, are gone. Compile with
+   [@runtyped/typescript] instead.
+
+[@runtyped/type]: https://npm.im/@runtyped/type
+[@runtyped/typescript]: https://npm.im/@runtyped/typescript
+[@runtyped/type-compiler]: https://npm.im/@runtyped/type-compiler
+
 ## [2026-06-27] - **`2.0.0`** - DeepKit V2
 
 This release cherry-picks the changes from the [DeepKit V2 PR] that are
