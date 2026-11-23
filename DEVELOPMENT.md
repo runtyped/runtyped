@@ -15,12 +15,8 @@ cd runtyped
 # Install all dependencies.
 npm install
 
-# Build `@runtyped/type-compiler` first and patch the TypeScript compiler
-# with the provided transformer.
-./install-compiler.sh
-
-# Build the rest of the packages, which will surface type information at
-# run-time due to using the patched TypeScript compiler.
+# Build all packages with @runtyped/typescript, which emits the type
+# information they surface at run-time.
 npm run build
 
 # Run tests.
