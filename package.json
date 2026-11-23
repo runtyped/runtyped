@@ -1,6 +1,6 @@
 {
   "name": "@runtyped/type",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "@runtyped/type, the fastest universal TypeScript serializer and validator with JIT engine for frontend, backend, http-transport, RPC, and database, with built-in validations, for Browser/NodeJS.",
   "type": "module",
   "main": "./dist/index.js",
@@ -39,7 +39,7 @@
     "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "@runtyped/typescript": "2.1.1",
+    "@runtyped/typescript": "3.0.0",
     "@types/chai": "^5.2.3",
     "@types/node": "^25.8.0",
     "chai": "^6.2.2",
@@ -48,5 +48,12 @@
   "engines": {
     "node": ">= 20.0.0"
   },
-  "keywords": ["validation", "reflection", "runtime", "types", "runtyped", "typescript"]
+  "keywords": [
+    "validation",
+    "reflection",
+    "runtime",
+    "types",
+    "runtyped",
+    "typescript"
+  ]
 }
