@@ -11,9 +11,9 @@
     "bench": "node --expose-gc packages/bench/dist/index.js",
     "test": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test 'packages/*/dist/tests/**/*.spec.js'",
     "test:coverage": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test --experimental-test-coverage 'packages/*/dist/tests/**/*.spec.js'",
-    "build": "tsc --build tsconfig.json",
-    "tsc": "tsc --build tsconfig.json",
-    "tsc-watch": "tsc --build --watch tsconfig.json",
+    "build": "node node_modules/@runtyped/typescript/bin/tsc.js --build tsconfig.json",
+    "tsc": "node node_modules/@runtyped/typescript/bin/tsc.js --build tsconfig.json",
+    "tsc-watch": "node node_modules/@runtyped/typescript/bin/tsc.js --build --watch tsconfig.json",
     "clean:all": "npm run clean:dist && npm run clean:modules && npm run clean:lock",
     "clean:modules": "rm -rf packages/*/node_modules; rm -rf node_modules",
     "clean:lock": "rm -rf packages/*/package-lock.json; rm -rf package-lock.json",
@@ -23,6 +23,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@runtyped/typescript": "2.1.1",
     "@types/node": "^25.8.0",
     "typescript": "^6.0.3"
   },
