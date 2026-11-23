@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - **`3.0.0`** - One compiler, one package
+## **`3.0.1`**
+
+- Fixed the typings requiring `@types/node`: `nodeBufferToTypedArray()` and
+  `typedArrayToBuffer()` referred to Node's `Buffer` type, so projects without
+  Node's type definitions failed to compile against `@runtyped/type`. They now
+  use the new `NodeBuffer` type, which is Node's `Buffer` when `@types/node`
+  is loaded and `Uint8Array` otherwise.
+
+## [2026-11-23] - **`3.0.0`** - One compiler, one package
 
 This release completes the move to [@runtyped/typescript], the fork of the
 Go-based TypeScript 7.x compiler, and consolidates the repository into a
