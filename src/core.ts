@@ -60,7 +60,16 @@ export interface TypedArray {
     readonly byteOffset: number;
 }
 
-export function nodeBufferToTypedArray<K>(buf: Buffer, type: TypedArrayClassType<K>): K {
+/**
+ * Node's `Buffer` when its type definitions (`@types/node`) are loaded, and
+ * `Uint8Array`, which `Buffer` extends, otherwise. Keeps Node-only types out of
+ * the public typings, so that they compile without `@types/node`.
+ *
+ * @reflection never
+ */
+export type NodeBuffer = typeof globalThis extends { Buffer: { prototype: infer B } } ? B : Uint8Array;
+
+export function nodeBufferToTypedArray<K>(buf: NodeBuffer, type: TypedArrayClassType<K>): K {
     return new type(buf.buffer, buf.byteOffset, buf.length / type.BYTES_PER_ELEMENT);
 }
 
@@ -124,7 +133,7 @@ export function nodeBufferToArrayBuffer<K>(buf: Uint8Array | ArrayBuffer): Array
  * This makes it necessary to create a Buffer with offset & length so that it accurately represents
  * the given TypedArray.
  */
-export function typedArrayToBuffer<K>(typedArray: TypedArray): Buffer {
+export function typedArrayToBuffer<K>(typedArray: TypedArray): NodeBuffer {
     if (typedArray instanceof Buffer) return typedArray;
     return Buffer.from(typedArray.buffer, typedArray.byteOffset, typedArray.byteLength);
 }
