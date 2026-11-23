@@ -49,7 +49,7 @@ test('simple', () => {
         doSomething() {
             this.username = 'asd';
         }
-        static __type = ['id', function () { return uuid(); }, 'username', 'bla', function () { return 'constructor()'; }, 'test', function () { return uuid(); }, 'nothing', () => "{", 'constructor', 'doSomething', 'User', '&3!>"&3#8&3$>%!3&s>\\'P&2(>)"0*P$0+5w,'];
+        static __type = ["id", function () { return uuid(); }, "username", "bla", function () { return 'constructor()'; }, "test", function () { return uuid(); }, "nothing", () => '{', "constructor", "doSomething", "User", "&3!>\\"&3#8&3$>%!3&s>'P&2(>)\\"0*P$0+5w,"];
     }`));
 });
 

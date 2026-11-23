@@ -516,7 +516,8 @@ export class InjectorModule<C extends { [name: string]: any } = any, IMPORT = In
      * is scheduled and executed once the provider is created by the dependency injection container.
      */
     setupProvider<T extends ClassType<T> | any>(classTypeOrToken: Token<T>, order: number = 0): ConfigureProvider<T extends ClassType<infer C> ? C : T> {
-        return setupProvider(classTypeOrToken, this.setupProviderRegistry, order);
+        // TS 7 treats the two `infer C` types as unrelated; the cast keeps both signatures intact.
+        return setupProvider(classTypeOrToken, this.setupProviderRegistry, order) as any;
     }
 
     /**
@@ -527,7 +528,7 @@ export class InjectorModule<C extends { [name: string]: any } = any, IMPORT = In
      * is scheduled and executed once the provider is created by the dependency injection container.
      */
     setupGlobalProvider<T extends ClassType<T> | any>(classTypeOrToken: Token<T>, order: number = 0): ConfigureProvider<T extends ClassType<infer C> ? C : T> {
-        return setupProvider(classTypeOrToken, this.globalSetupProviderRegistry, order);
+        return setupProvider(classTypeOrToken, this.globalSetupProviderRegistry, order) as any;
     }
 
     getOrCreateInjector(buildContext: BuildContext): Injector {

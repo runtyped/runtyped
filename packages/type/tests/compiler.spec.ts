@@ -93,6 +93,7 @@ export function transpile<T extends string | Record<string, string>>(files: T, o
         res[fileName.slice(__dirname.length + 1)] = data;
     }, undefined, undefined, {
         before: [(context: TransformationContext) => new ReflectionTransformer(context).forHost(host.compilerHost).withReflection({ reflection: 'default' })],
+        afterDeclarations: [(context: TransformationContext) => new DeclarationTransformer(context).forHost(host.compilerHost).withReflection({ reflection: 'default' })],
     });
 
     return res as any;
