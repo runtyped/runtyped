@@ -23,7 +23,7 @@
   ],
   "license": "MIT",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run clean:dist && tsc -p tsconfig.json",
     "tsc-watch": "tsc -p tsconfig.json --watch",
     "test": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test 'dist/tests/**/*.spec.js'",
     "test:coverage": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test --experimental-test-coverage 'dist/tests/**/*.spec.js'",
