@@ -1,102 +1,126 @@
 /** @reflection never */
 import { test, describe } from 'node:test';
 import { expect } from '@runtyped/expect';
-import * as ts from 'typescript';
-import { ModuleKind, ScriptTarget, TransformationContext, transpileModule } from 'typescript';
-import { DeclarationTransformer, ReflectionTransformer } from '@runtyped/type-compiler';
 import { reflect, reflect as reflect2, ReflectionClass, removeTypeName, typeOf as typeOf2 } from '../src/reflection/reflection.js';
 import { assertType, defaultAnnotation, primaryKeyAnnotation, ReflectionKind, ReflectionVisibility, stringifyType, Type, TypeClass, TypeFunction, TypeMethod, TypeObjectLiteral, TypeProperty, TypeUnion } from '../src/reflection/type.js';
 import { ReflectionOp } from '@runtyped/type-spec';
 import { ClassType, isObject } from '@runtyped/core';
 import { pack, resolveRuntimeType } from '../src/reflection/processor.js';
 import { expectEqualType } from './utils.js';
-import { createSystem, createVirtualCompilerHost, knownLibFilesForCompilerOptions } from '@typescript/vfs';
-import { dirname, join } from 'path';
-import { readFileSync } from 'fs';
+import { spawnSync } from 'child_process';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { createRequire } from 'module';
+import { tmpdir } from 'os';
+import { dirname, join, relative } from 'path';
 
-const __dirname = import.meta.dirname;
 const require = createRequire(import.meta.url);
 
 Error.stackTraceLimit = 200;
 
-const defaultLibLocation = __dirname + '/node_modules/typescript/lib/';
+// RUNTYPED_TSC overrides the compiler, e.g. with a local build of the Go tsc
+// (TypeScript/built/local/tsc) to test changes before they are released.
+const tsc = process.env.RUNTYPED_TSC || join(dirname(require.resolve('@runtyped/typescript/package.json')), 'bin/tsc.js');
 
-function readLibs(compilerOptions: ts.CompilerOptions, files: Map<string, string>) {
-    const getLibSource = (name: string) => {
-        const lib = dirname(require.resolve('typescript'));
-        return readFileSync(join(lib, name), 'utf8');
-    };
-    const libs = knownLibFilesForCompilerOptions(compilerOptions, ts);
-    for (const lib of libs) {
-        if (lib.startsWith('lib.webworker.d.ts')) continue; //dom and webworker can not go together
+interface TranspileOptions {
+    module?: 'es2020' | 'commonjs';
+}
 
-        try {
-            files.set(defaultLibLocation + lib, getLibSource(lib));
-        } catch (error) {
-            //that's fine, some libs are not available in all versions
+/**
+ * Compiles the given sources with @runtyped/typescript, as a project in a
+ * temporary directory, and returns the emitted files.
+ *
+ * A string is compiled on its own, without lib files (like a single-file
+ * transpile), and its JavaScript is returned. A map of files (names without
+ * extension) is compiled as a project, and all emitted files are returned,
+ * keyed by their name relative to the project (e.g. `app.js`, `user.d.ts`).
+ *
+ * String literals in the output are re-quoted in single quotes, the style of
+ * the TypeScript 6 printer these tests' expectations were written against.
+ */
+export function transpile<T extends string | Record<string, string>>(files: T, options: TranspileOptions = {}): T extends string ? string : Record<string, string> {
+    const single = 'string' === typeof files;
+    const sources: Record<string, string> = single ? { module: files } : files;
+    const dir = mkdtempSync(join(tmpdir(), 'runtyped-compiler-spec-'));
+    try {
+        const fileNames = Object.keys(sources).map(name => name + '.ts');
+        for (const [name, source] of Object.entries(sources)) {
+            const file = join(dir, name + '.ts');
+            mkdirSync(dirname(file), { recursive: true });
+            writeFileSync(file, source);
         }
+        const compilerOptions: Record<string, unknown> = {
+            target: 'es2020',
+            module: options.module || 'es2020',
+            moduleResolution: 'bundler',
+            declaration: true,
+            experimentalDecorators: true,
+            esModuleInterop: true,
+            skipLibCheck: true,
+            noCheck: true,
+            rootDir: '.',
+            outDir: 'out',
+            types: [],
+        };
+        if (single) compilerOptions.noLib = true;
+        writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify({ compilerOptions, reflection: true, files: fileNames }));
+
+        const result = tsc.endsWith('.js')
+            ? spawnSync(process.execPath, [tsc, '-p', dir], { encoding: 'utf8' })
+            : spawnSync(tsc, ['-p', dir], { encoding: 'utf8' });
+        const outDir = join(dir, 'out');
+        const res: Record<string, string> = {};
+        for (const file of readdirSync(outDir, { recursive: true, withFileTypes: true })) {
+            if (!file.isFile()) continue;
+            const path = join(file.parentPath, file.name);
+            res[relative(outDir, path)] = toSingleQuotes(readFileSync(path, 'utf8'));
+        }
+        if (single) {
+            if (!('module.js' in res)) throw new Error(`tsc emitted no output:\n${result.stdout}${result.stderr}`);
+            return res['module.js'] as any;
+        }
+        return res as any;
+    } finally {
+        rmSync(dir, { recursive: true, force: true });
     }
 }
 
-export function transpile<T extends string | Record<string, string>>(files: T, options: ts.CompilerOptions = {}): T extends string ? string : Record<string, string> {
-    const compilerOptions: ts.CompilerOptions = {
-        target: ScriptTarget.ES2020,
-        allowNonTsExtensions: true,
-        module: ModuleKind.ES2020,
-        declaration: true,
-        lib: [],
-        noLib: true,
-        transpileOnly: true,
-        experimentalDecorators: true,
-        esModuleInterop: true,
-        skipLibCheck: true,
-        ...options
-    };
-
-    process.env['DEBUG'] = 'runtyped';
-    if ('string' === typeof files) {
-        return transpileModule(files, {
-            fileName: __dirname + '/module.ts',
-            compilerOptions,
-            transformers: {
-                before: [(context: TransformationContext) => new ReflectionTransformer(context).withReflection({ reflection: 'default' })],
-                afterDeclarations: [(context: TransformationContext) => new DeclarationTransformer(context).withReflection({ reflection: 'default' })],
-            }
-        }).outputText as any;
+/**
+ * Re-quotes the string literals of JavaScript code in single quotes. Comments,
+ * template literals and regular expressions are left alone.
+ */
+function toSingleQuotes(js: string): string {
+    let out = '';
+    let i = 0;
+    while (i < js.length) {
+        const c = js[i];
+        const next = js[i + 1];
+        if (c === '/' && next === '/') {
+            const end = js.indexOf('\n', i);
+            const stop = end === -1 ? js.length : end;
+            out += js.slice(i, stop);
+            i = stop;
+        } else if (c === '/' && next === '*') {
+            const stop = js.indexOf('*/', i + 2) + 2;
+            out += js.slice(i, stop);
+            i = stop;
+        } else if (c === '`' || c === '/' && /[(,=:[!&|?{};]\s*$/.test(out)) {
+            // Template literal or regular expression: copy up to the closing delimiter.
+            let j = i + 1;
+            while (j < js.length && js[j] !== c) j += js[j] === '\\' ? 2 : 1;
+            out += js.slice(i, j + 1);
+            i = j + 1;
+        } else if (c === '"' || c === "'") {
+            let j = i + 1;
+            while (j < js.length && js[j] !== c) j += js[j] === '\\' ? 2 : 1;
+            const value = (0, eval)(js.slice(i, j + 1)) as string;
+            out += "'" + value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r') + "'";
+            i = j + 1;
+        } else {
+            out += c;
+            i++;
+        }
     }
-
-    const fsMap = new Map<string, string>();
-    readLibs(compilerOptions, fsMap);
-    compilerOptions.lib = [...fsMap.keys()];
-
-    for (const [fileName, source] of Object.entries(files)) {
-        fsMap.set(__dirname + '/' + fileName + '.ts', source);
-    }
-    const system = createSystem(fsMap);
-
-    const host = createVirtualCompilerHost(system, compilerOptions, ts);
-    host.compilerHost.getDefaultLibLocation = () => defaultLibLocation;
-
-    const rootNames = Object.keys(files).map(fileName => __dirname + '/' + fileName + '.ts');
-    const program = ts.createProgram({
-        rootNames: rootNames,
-        options: compilerOptions,
-        host: host.compilerHost,
-    });
-    // for (const d of getPreEmitDiagnostics(program)) {
-    //     console.log('diagnostics', d.file?.fileName, d.messageText, d.start, d.length);
-    // }
-    const res: Record<string, string> = {};
-
-    program.emit(undefined, (fileName, data) => {
-        res[fileName.slice(__dirname.length + 1)] = data;
-    }, undefined, undefined, {
-        before: [(context: TransformationContext) => new ReflectionTransformer(context).forHost(host.compilerHost).withReflection({ reflection: 'default' })],
-        afterDeclarations: [(context: TransformationContext) => new DeclarationTransformer(context).forHost(host.compilerHost).withReflection({ reflection: 'default' })],
-    });
-
-    return res as any;
+    return out;
 }
 
 /**
@@ -1847,7 +1871,7 @@ test('import types named import cjs', () => {
             typeOf<a>();
         `,
         'user': `export interface User {id: number}`
-    }, { module: ModuleKind.CommonJS });
+    }, { module: 'commonjs' });
     console.log(js);
     expect(js['app.js']).toContain(`__ΩUser`);
     expect(js['app.js']).toContain(`const __ΩPartial = [`);
@@ -1866,7 +1890,7 @@ test('emit typeName for type only import', () => {
         `,
         'user': `export interface User {id: number}`
     }, {
-        module: ModuleKind.CommonJS
+        module: 'commonjs'
     });
     const typeOf = typeOf2;
     // TODO: this is required because eval() executes the generated code, which
@@ -1885,7 +1909,7 @@ test('emit typeName for named type only import', () => {
         `,
         'user': `export interface User {id: number}`
     }, {
-        module: ModuleKind.CommonJS
+        module: 'commonjs'
     });
     const typeOf = typeOf2;
     // TODO: this is required because eval() executes the generated code, which
