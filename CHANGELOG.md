@@ -39,6 +39,17 @@ All notable changes to this project will be documented in this file.
   `getValidatorFunction<T>()`, …) evaluate each check once and only track the
   number of errors where a check can add errors of its own (~2x faster on
   valid data: `validateFunction<T>()` ~22 ns → ~10 ns on a simple type).
+- Type guards that do not collect errors (`is<T>()`, `typeGuard<T>()`, …)
+  stop at the first failure in nested types too: array and index signature
+  loops break on the first invalid entry, and members that need loops only
+  run once all members before them passed. Required members whose type
+  rejects `undefined` no longer get a redundant presence check, and index
+  signatures without named members skip the named-member lookup
+  (`typeGuard<T>()` on a nested type: ~24 ns → ~18 ns valid, ~23 ns → ~12 ns
+  invalid). Validators that collect errors still check everything.
+- `stringifyValueWithType()` only allocates its circular reference set for
+  objects, which speeds up error messages for invalid primitives
+  (`validateFunction<T>()` on invalid data: ~59 ns → ~47 ns).
 
 ## **`3.0.2`**
 

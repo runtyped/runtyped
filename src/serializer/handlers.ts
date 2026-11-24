@@ -7,7 +7,7 @@
  *
  * You should have received a copy of the MIT License along with this program.
  */
-import type { Builder, Ref } from '../core/index.js';
+import type { Builder, Ref, VarRef } from '../core/index.js';
 import { isNumeric, stringifyValueWithType } from '../core/index.js';
 import { TypeNumberBrand } from '../type-spec/index.js';
 
@@ -1189,7 +1189,11 @@ export const guardArrayFast: JsonTypeHandler = (type, input, b, state) => {
         b.loop(input, (elem, idx) => {
             const childState = state.forIndex(idx);
             const elemValid = childState.build(elementType, elem) as Ref<boolean>;
-            b.if_(b.not(elemValid), () => b.setVar(result, b.lit(false)));
+            b.if_(b.not(elemValid), () => {
+                b.setVar(result, b.lit(false));
+                // Without errors to collect, the first invalid element decides.
+                if (!state.collectErrors) b.break_();
+            });
         });
     });
     return b.getVar(result);
@@ -1791,6 +1795,73 @@ export const guardObjectScore: JsonTypeHandler = (type, input, b, state) => {
 /**
  * Fast (boolean) object guard - validates properties AND rejects unknown keys.
  */
+/**
+ * Whether no value of `type` is `undefined`, so that a property of this type
+ * is necessarily present when its value passes the type check.
+ */
+function rejectsUndefined(type: Type): boolean {
+    switch (type.kind) {
+        case ReflectionKind.string:
+        case ReflectionKind.number:
+        case ReflectionKind.boolean:
+        case ReflectionKind.bigint:
+        case ReflectionKind.symbol:
+        case ReflectionKind.null:
+        case ReflectionKind.regexp:
+        case ReflectionKind.templateLiteral:
+        case ReflectionKind.array:
+        case ReflectionKind.tuple:
+        case ReflectionKind.objectLiteral:
+        case ReflectionKind.class:
+            return true;
+        case ReflectionKind.literal:
+            return type.literal !== undefined;
+        case ReflectionKind.union:
+            return type.types.every(rejectsUndefined);
+        default:
+            return false;
+    }
+}
+
+/**
+ * An && chain of checks that stops at the first failing one, even when some
+ * checks need statements (e.g. loops) besides their final expression: those
+ * statements only run once every check before them passed.
+ */
+class ShortCircuitChain {
+    private pending: Ref<boolean> | undefined;
+    private ok: VarRef<boolean> | undefined;
+
+    constructor(private readonly b: Builder) {}
+
+    add(buildCheck: () => Ref<boolean>): void {
+        const b = this.b;
+        const { result: check, statements } = b.capture(buildCheck);
+        if (statements.length === 0) {
+            this.pending = this.pending ? b.and(this.pending, check) : check;
+            return;
+        }
+        const before = this.pending ?? b.lit(true);
+        this.pending = undefined;
+        if (this.ok) {
+            b.setVar(this.ok, b.and(b.getVar(this.ok), before));
+        } else {
+            this.ok = b.var_(before);
+        }
+        const ok = this.ok;
+        b.if_(b.getVar(ok), () => {
+            b.emit(statements);
+            b.setVar(ok, check);
+        });
+    }
+
+    result(): Ref<boolean> {
+        const b = this.b;
+        if (!this.ok) return this.pending ?? b.lit(true);
+        return this.pending ? b.and(b.getVar(this.ok), this.pending) : b.getVar(this.ok);
+    }
+}
+
 export const guardObjectFast: JsonTypeHandler = (type, input, b, state) => {
     const objType = type as TypeObjectLiteral | TypeClass;
     const members = resolveTypeMembers(objType);
@@ -1955,8 +2026,10 @@ export const guardObjectFast: JsonTypeHandler = (type, input, b, state) => {
 
             b.setVar(result, b.getVar(allValid));
         } else {
-            // Not collecting errors - can use short-circuit && chain
-            let propertyCheck: Ref<boolean> = b.lit(true);
+            // Not collecting errors: stop at the first failing property. Plain
+            // checks are chained with &&; checks that need statements (array
+            // and record loops) only run once everything before them passed.
+            const chain = new ShortCircuitChain(b);
 
             for (const member of members) {
                 if (!isPropertyMemberType(member)) continue;
@@ -1965,17 +2038,18 @@ export const guardObjectFast: JsonTypeHandler = (type, input, b, state) => {
                 const propType = member.type;
                 const isOpt = isOptional(member);
                 const propInput = input.get(propName);
+                const childState = state.forProperty(propName);
 
                 if (!isOpt) {
-                    const hasProp = b.has(input, propName);
-                    const childState = state.forProperty(propName);
-                    const propCheck = childState.build(propType, propInput) as Ref<boolean>;
-                    propertyCheck = b.and(propertyCheck, b.and(hasProp, propCheck));
+                    chain.add(() => {
+                        const propCheck = childState.build(propType, propInput) as Ref<boolean>;
+                        // Presence only needs checking if the type accepts undefined.
+                        return rejectsUndefined(propType) ? propCheck : b.and(b.has(input, propName), propCheck);
+                    });
                 } else {
-                    const propIsNullOrUndefined = b.isNullish(propInput);
-                    const childState = state.forProperty(propName);
-                    const propCheck = childState.build(propType, propInput) as Ref<boolean>;
-                    propertyCheck = b.and(propertyCheck, b.or(propIsNullOrUndefined, propCheck));
+                    chain.add(() =>
+                        b.or(b.isNullish(propInput), childState.build(propType, propInput) as Ref<boolean>),
+                    );
                 }
             }
 
@@ -1984,22 +2058,21 @@ export const guardObjectFast: JsonTypeHandler = (type, input, b, state) => {
                     const methodName = memberNameToString(method.name);
                     const methodInput = input.get(methodName);
                     const isOpt = isOptional(method);
+                    const childState = state.forProperty(methodName);
 
                     if (!isOpt) {
-                        const hasMethod = b.has(input, methodName);
-                        const childState = state.forProperty(methodName);
-                        const methodCheck = childState.build(method, methodInput) as Ref<boolean>;
-                        propertyCheck = b.and(propertyCheck, b.and(hasMethod, methodCheck));
+                        chain.add(() =>
+                            b.and(b.has(input, methodName), childState.build(method, methodInput) as Ref<boolean>),
+                        );
                     } else {
-                        const methodIsNullOrUndefined = b.isNullish(methodInput);
-                        const childState = state.forProperty(methodName);
-                        const methodCheck = childState.build(method, methodInput) as Ref<boolean>;
-                        propertyCheck = b.and(propertyCheck, b.or(methodIsNullOrUndefined, methodCheck));
+                        chain.add(() =>
+                            b.or(b.isNullish(methodInput), childState.build(method, methodInput) as Ref<boolean>),
+                        );
                     }
                 }
             }
 
-            b.setVar(result, propertyCheck);
+            b.setVar(result, chain.result());
         }
     });
 
@@ -2007,6 +2080,14 @@ export const guardObjectFast: JsonTypeHandler = (type, input, b, state) => {
     if (indexSignatures.length > 0) {
         const indexValid = b.var_<boolean>(b.lit(true));
         const hasExplicit = explicitProps.has.bind(explicitProps);
+        // Without errors to collect, the first invalid entry decides.
+        const invalidEntry = () => {
+            b.setVar(indexValid, b.lit(false));
+            if (!state.collectErrors) b.break_();
+        };
+        // Skip explicit (named) properties, if there are any
+        const ifNotExplicit = (key: Ref<string>, fn: () => void) =>
+            explicitProps.size > 0 ? b.if_(b.not(b.call(hasExplicit, key)), fn) : fn();
 
         b.if_(b.getVar(result), () => {
             if (indexSignatures.length === 1) {
@@ -2014,17 +2095,14 @@ export const guardObjectFast: JsonTypeHandler = (type, input, b, state) => {
                 const sig = indexSignatures[0];
 
                 b.forIn(input, (key, value) => {
-                    // Skip explicit (named) properties
-                    b.if_(b.not(b.call(hasExplicit, key)), () => {
+                    ifNotExplicit(key, () => {
                         // Skip undefined values
                         b.if_(b.neq(value, b.lit(undefined)), () => {
                             if (sig.index.kind === ReflectionKind.string) {
                                 // String index: all non-explicit keys match — inline value guard
                                 const childState = state.forKey(key);
                                 const check = childState.build(sig.type, value) as Ref<boolean>;
-                                b.if_(b.not(check), () => {
-                                    b.setVar(indexValid, b.lit(false));
-                                });
+                                b.if_(b.not(check), invalidEntry);
                             } else if (sig.index.kind === ReflectionKind.number) {
                                 // Number index: check key is numeric
                                 const isNumeric = b.call((k: string) => {
@@ -2036,13 +2114,9 @@ export const guardObjectFast: JsonTypeHandler = (type, input, b, state) => {
                                     () => {
                                         const childState = state.forKey(key);
                                         const check = childState.build(sig.type, value) as Ref<boolean>;
-                                        b.if_(b.not(check), () => {
-                                            b.setVar(indexValid, b.lit(false));
-                                        });
+                                        b.if_(b.not(check), invalidEntry);
                                     },
-                                    () => {
-                                        b.setVar(indexValid, b.lit(false));
-                                    },
+                                    invalidEntry,
                                 );
                             } else if (sig.index.kind === ReflectionKind.templateLiteral) {
                                 // Template literal index: check key matches pattern
@@ -2057,13 +2131,9 @@ export const guardObjectFast: JsonTypeHandler = (type, input, b, state) => {
                                     () => {
                                         const childState = state.forKey(key);
                                         const check = childState.build(sig.type, value) as Ref<boolean>;
-                                        b.if_(b.not(check), () => {
-                                            b.setVar(indexValid, b.lit(false));
-                                        });
+                                        b.if_(b.not(check), invalidEntry);
                                     },
-                                    () => {
-                                        b.setVar(indexValid, b.lit(false));
-                                    },
+                                    invalidEntry,
                                 );
                             }
                         });

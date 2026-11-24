@@ -727,3 +727,45 @@ test('precompiled type guards honour validation annotations', () => {
         }
     }
 });
+
+test('precompiled guards with nested arrays and records stop early but stay exact', () => {
+    // These types take the non-pure object path: their array and record
+    // members need loops, which only run once the earlier members passed.
+    interface Nested {
+        id: number;
+        tags: string[];
+        scores: Record<string, number>;
+        anything: any;
+        maybe: string | undefined;
+        optionalList?: number[];
+        last: string;
+    }
+
+    const valid: Nested = { id: 1, tags: ['a', 'b'], scores: { x: 1 }, anything: null, maybe: undefined, last: 'z' };
+    const guards = [typeGuard<Nested>(), (v: unknown) => is<Nested>(v)];
+
+    for (const guard of guards) {
+        expect(guard(valid)).toEqual(true);
+        expect(guard({ ...valid, optionalList: [1, 2] })).toEqual(true);
+        expect(guard({ ...valid, optionalList: [1, 'x'] })).toEqual(false);
+        expect(guard({ ...valid, tags: ['a', 1, 'b'] })).toEqual(false);
+        expect(guard({ ...valid, tags: 'a' })).toEqual(false);
+        expect(guard({ ...valid, scores: { x: 1, y: 'no' } })).toEqual(false);
+        expect(guard({ ...valid, scores: null })).toEqual(false);
+        expect(guard({ ...valid, id: 'x' })).toEqual(false);
+        expect(guard({ ...valid, last: 1 })).toEqual(false);
+
+    }
+});
+
+test('precompiled guards check records with named properties', () => {
+    interface Mixed {
+        name: string;
+        [key: string]: string | number;
+    }
+
+    const guard = typeGuard<Mixed>();
+    expect(guard({ name: 'a', x: 1, y: 'b' })).toEqual(true);
+    expect(guard({ name: 'a', x: true })).toEqual(false);
+    expect(guard({ name: 1, x: 1 })).toEqual(false);
+});

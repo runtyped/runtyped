@@ -127,7 +127,7 @@ function stringifyPrimitive(value: unknown): string {
  * stringifyValueWithType([1,2,3,4,5,6])  // "array [1, 2, 3, ...] (6 items)"
  * ```
  */
-export function stringifyValueWithType(value: unknown, seen: WeakSet<object> = new WeakSet()): string {
+export function stringifyValueWithType(value: unknown, seen?: WeakSet<object>): string {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
 
@@ -160,7 +160,9 @@ export function stringifyValueWithType(value: unknown, seen: WeakSet<object> = n
         case 'object': {
             const obj = value as object;
 
-            // Check for circular references
+            // Check for circular references. Only objects need the set, so it
+            // is allocated here: this runs for every invalid value validated.
+            seen ??= new WeakSet();
             if (seen.has(obj)) {
                 return 'object [circular]';
             }
