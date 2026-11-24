@@ -8,13 +8,13 @@ import {
     entityAnnotation,
     findMember,
     isSameType,
-    PrimaryKey,
-    primaryKeyAnnotation,
+    Identifier,
+    identifierAnnotation,
     Reference,
     ReflectionKind,
     Type,
     TypeClass,
-    TypeProperty
+    TypeProperty,
 } from '../src/reflection/type.js';
 import { deserializeType, serializeType } from '../src/type-serialization.js';
 import { entity } from '../src/decorator.js';
@@ -40,13 +40,13 @@ test('serialize basics', () => {
 });
 
 test('serialize type annotations', () => {
-    type t = string & PrimaryKey;
+    type t = string & Identifier;
     expect(serializeType(typeOf<t>())).toEqual([
         { kind: ReflectionKind.string, typeName: 't', decorators: [1] },
-        { kind: ReflectionKind.objectLiteral, typeName: 'PrimaryKey', types: [2] },
+        { kind: ReflectionKind.objectLiteral, typeName: 'Identifier', types: [2] },
         { kind: ReflectionKind.propertySignature, name: '__meta', optional: true, type: 3 },
         { kind: ReflectionKind.tuple, types: [{ kind: ReflectionKind.tupleMember, type: 4 }, { kind: ReflectionKind.tupleMember, type: 5 }] },
-        { kind: ReflectionKind.literal, literal: 'primaryKey' },
+        { kind: ReflectionKind.literal, literal: 'identifier' },
         { kind: ReflectionKind.never }
     ]);
 });
@@ -245,11 +245,11 @@ test('roundTrip class generic', () => {
 
 test('type annotations', () => {
     {
-        type t = string & PrimaryKey;
+        type t = string & Identifier;
         const type = roundTrip<t>();
         assertType(type, ReflectionKind.string);
         expect(type.typeName).toBe('t');
-        expect(primaryKeyAnnotation.isPrimaryKey(type)).toBe(true);
+        expect(identifierAnnotation.isIdentifier(type)).toBe(true);
     }
 });
 
@@ -283,7 +283,7 @@ test('circular basics', () => {
 
 test('circular with decorators', () => {
     class MyModel {
-        sub?: MyModel & PrimaryKey;
+        sub?: MyModel & Identifier;
     }
 
     const json = serializeType(typeOf<MyModel>());
@@ -291,12 +291,12 @@ test('circular with decorators', () => {
 
     assertType(type, ReflectionKind.class);
     expect(getClassName(type.classType)).toBe('MyModel');
-    expect(primaryKeyAnnotation.isPrimaryKey(type)).toBe(false);
+    expect(identifierAnnotation.isIdentifier(type)).toBe(false);
     assertType(type.types[0], ReflectionKind.property);
     expect(type.types[0].name).toBe('sub');
     assertType(type.types[0].type, ReflectionKind.class);
     expect(getClassName(type.types[0].type.classType)).toBe('MyModel');
-    expect(primaryKeyAnnotation.isPrimaryKey(type.types[0].type)).toBe(true);
+    expect(identifierAnnotation.isIdentifier(type.types[0].type)).toBe(true);
 });
 
 test('globals Uint8Array', () => {
@@ -333,7 +333,7 @@ test('Type excluded', () => {
 });
 
 test('entity classes', () => {
-    @(entity.name('user').collection('users').databaseSchema('db').index(['id'], { name: 'primary' }))
+    @(entity.name('user'))
     class User {
         id: number = 0;
     }
@@ -347,24 +347,16 @@ test('entity classes', () => {
     expect(entityAttributes).not.toBeUndefined();
     if (entityAttributes) {
         expect(entityAttributes.name).toBe('user');
-        expect(entityAttributes.collection).toBe('users');
-        expect(entityAttributes.database).toBe('db');
-        expect(entityAttributes.singleTableInheritance).toBe(undefined);
-        expect(entityAttributes.indexes).toEqual([{ names: ['id'], options: { name: 'primary' } }]);
     }
 
     const reflection = ReflectionClass.from(back);
     expect(reflection1 !== reflection).toBe(true);
 
     expect(reflection.name).toBe('user');
-    expect(reflection.collectionName).toBe('users');
-    expect(reflection.databaseSchemaName).toBe('db');
-    expect(reflection.singleTableInheritance).toBe(false);
-    expect(reflection.indexes).toEqual([{ names: ['id'], options: { name: 'primary' } }]);
 });
 
 test('entity interface', () => {
-    interface User extends Entity<{ name: 'user', collection: 'users', database: 'db', indexes: [{ names: ['id'], options: { name: 'primary' } }] }> {
+    interface User extends Entity<{ name: 'user', description: 'A registered user' }> {
         id: number;
     }
 
@@ -375,10 +367,7 @@ test('entity interface', () => {
     expect(entityAttributes).not.toBeUndefined();
     if (entityAttributes) {
         expect(entityAttributes.name).toBe('user');
-        expect(entityAttributes.collection).toBe('users');
-        expect(entityAttributes.database).toBe('db');
-        expect(entityAttributes.singleTableInheritance).toBe(undefined);
-        expect(entityAttributes.indexes).toEqual([{ names: ['id'], options: { name: 'primary' } }]);
+        expect(entityAttributes.description).toBe('A registered user');
     }
 });
 
@@ -400,7 +389,7 @@ test('class constructor back serialized', () => {
 test('class reference with entity options', () => {
     @entity.name('author')
     class Author {
-        id: number & PrimaryKey = 0;
+        id: number & Identifier = 0;
         firstName?: string;
     }
 
@@ -415,7 +404,7 @@ test('class reference with entity options', () => {
     assertType(author, ReflectionKind.property);
     const authorReflection = ReflectionClass.from(author.type);
     expect(authorReflection.getName()).toBe('author');
-    expect(authorReflection.getPrimary().name).toBe('id');
+    expect(authorReflection.getIdentifier().name).toBe('id');
 
     expect(authorReflection.getProperty('firstName').isOptional()).toBe(true);
 });

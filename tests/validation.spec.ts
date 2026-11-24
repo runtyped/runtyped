@@ -1,6 +1,6 @@
 import { test, mock } from 'node:test';
 import { expect } from './expect/index.js';
-import { AutoIncrement, Excluded, Group, integer, PrimaryKey, Type, Unique } from '../src/reflection/type.js';
+import { Excluded, Group, integer, Identifier, Type } from '../src/reflection/type.js';
 import { Email, MaxLength, MinLength, Positive, Validate } from '../src/type-annotations.js';
 import { validate, validates, ValidatorError } from '../src/validator.js';
 import { assert, is } from '../src/typeguard.js';
@@ -133,7 +133,7 @@ test('simple class', () => {
 
 test('class', () => {
     class User {
-        id: integer & PrimaryKey & AutoIncrement & Positive = 0;
+        id: integer & Identifier & Positive = 0;
 
         email?: Email & Group<'sensitive'>;
 
@@ -142,7 +142,7 @@ test('class', () => {
 
         logins: integer & Positive & Excluded<'json'> = 0;
 
-        constructor(public username: string & MinLength<3> & MaxLength<24> & Unique) {
+        constructor(public username: string & MinLength<3> & MaxLength<24>) {
         }
     }
 

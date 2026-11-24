@@ -10,7 +10,7 @@
 
 import { test } from 'node:test';
 import { expect } from './expect/index.js';
-import { assertType, AutoIncrement, Group, groupAnnotation, PrimaryKey, ReflectionKind } from '../src/reflection/type.js';
+import { assertType, Group, groupAnnotation, Identifier, ReflectionKind } from '../src/reflection/type.js';
 import { typeOf } from '../src/reflection/reflection.js';
 import { cast } from '../src/serializer-facade.js';
 import { equalType } from './utils.js';
@@ -126,7 +126,7 @@ test('array', () => {
     }
 
     class Person {
-        id: number & PrimaryKey & AutoIncrement = 0;
+        id: number & Identifier = 0;
         tags: string[] = [];
         addresses: Address[] = [];
     }

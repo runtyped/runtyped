@@ -7,11 +7,11 @@
  * ```typescript
  * import { TypeAnnotation, typeAnnotation } from '@runtyped/type';
  *
- * type PrimaryKey = TypeAnnotation<'primaryKey'>;
- * type UserId = string & PrimaryKey;
+ * type Sensitive = TypeAnnotation<'sensitive'>;
+ * type Password = string & Sensitive;
  *
- * const type = typeOf<UserId>();
- * const metaData = typeAnnotation.getType(type, 'primaryKey');
+ * const type = typeOf<Password>();
+ * const metaData = typeAnnotation.getType(type, 'sensitive');
  * ```
  *
  * Runtime type is `{ __meta?: never & [T, Options] };`

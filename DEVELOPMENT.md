@@ -44,6 +44,7 @@ The repository is a single package, [@runtyped/type], built by one
 | `tests/core/`      | Tests for `src/core/`.                                         |
 | `tests/expect/`    | Internal `expect()`-style assertion helper built on `chai`.    |
 | `bench/`           | Benchmarks, built around [mitata].                             |
+| `examples/`        | Runnable usage examples, run as part of `npm test`.            |
 | `docs/`            | Documentation.                                                 |
 
 Only `dist/index.*` and `dist/src/` are published to npm. `src/core/` and

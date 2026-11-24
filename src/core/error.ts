@@ -18,19 +18,19 @@ import { CustomError } from './core.js';
  * @example
  * ```typescript
  * // Direct throw with inline code
- * throw new RuntypedError('RT-TP100', 'Class User has no primary key');
+ * throw new RuntypedError('RT-TP100', 'Class User has no identifier');
  *
  * // Subclass with fixed code
- * class NoPrimaryKeyError extends RuntypedError {
+ * class NoIdentifierError extends RuntypedError {
  *     constructor(className: string) {
- *         super('RT-TP100', `Class ${className} has no primary key`);
+ *         super('RT-TP100', `Class ${className} has no identifier`);
  *     }
  * }
  * ```
  *
  * Output:
  * ```
- * RuntypedError: Class User has no primary key
+ * RuntypedError: Class User has no identifier
  *
  * Error code: RT-TP100
  * ```

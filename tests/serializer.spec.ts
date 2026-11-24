@@ -19,7 +19,7 @@ import { parametersToTuple } from '../src/reflection/extends.js';
 import { ReflectionClass, reflect, typeOf } from '../src/reflection/reflection.js';
 import { ReflectionKind, Type, TypeProperty, TypePropertySignature, assertType, isCustomTypeClass, isTypeClassOf, stringifyResolvedType } from '../src/reflection/type.js';
 import { cast, deserialize, patch, serialize } from '../src/serializer-facade.js';
-import { Alphanumeric, AutoIncrement, BackReference, BinaryBigInt, Embedded, Excluded, Group, MapName, MaxLength, MinLength, PrimaryKey, Reference, SignedBinaryBigInt, int8, integer, typeAnnotation } from '../src/type-annotations.js';
+import { Alphanumeric, BackReference, BinaryBigInt, Embedded, Excluded, Group, MapName, MaxLength, MinLength, Identifier, Reference, SignedBinaryBigInt, int8, integer, typeAnnotation } from '../src/type-annotations.js';
 import { is } from '../src/typeguard.js';
 import { ValidationError, validate } from '../src/validator.js';
 import { StatEnginePowerUnit, StatWeightUnit } from './types.js';
@@ -511,10 +511,10 @@ test('union multiple classes', () => {
 });
 
 test('brands', () => {
-    expect(cast<number & PrimaryKey>(2)).toEqual(2);
-    expect(cast<number & PrimaryKey>('2')).toEqual(2);
+    expect(cast<number & Identifier>(2)).toEqual(2);
+    expect(cast<number & Identifier>('2')).toEqual(2);
 
-    expect(serialize<number & PrimaryKey>(2)).toEqual(2);
+    expect(serialize<number & Identifier>(2)).toEqual(2);
 });
 
 test('throw', () => {
@@ -607,7 +607,7 @@ test('class circular reference', () => {
 
 test('class with reference', () => {
     class User {
-        id: number & PrimaryKey = 0;
+        id: number & Identifier = 0;
 
         constructor(public username: string) {}
     }
@@ -646,7 +646,7 @@ test('class with reference', () => {
 
 test('class with back reference', () => {
     class User {
-        id: number & PrimaryKey = 0;
+        id: number & Identifier = 0;
 
         constructor(public username: string) {}
     }
@@ -817,7 +817,7 @@ test('embedded multi parameter', () => {
 
 test('class inheritance', () => {
     abstract class Person {
-        id: number & PrimaryKey & AutoIncrement = 0;
+        id: number & Identifier = 0;
         firstName?: string;
         lastName?: string;
         abstract type: string;

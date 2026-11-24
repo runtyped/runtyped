@@ -23,6 +23,7 @@
     "index.ts",
     "src",
     "tests",
-    "bench"
+    "bench",
+    "examples"
   ]
 }

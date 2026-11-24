@@ -25,18 +25,14 @@
   "scripts": {
     "build": "npm run clean:dist && tsc -p tsconfig.json",
     "tsc-watch": "tsc -p tsconfig.json --watch",
-    "test": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test 'dist/tests/**/*.spec.js'",
-    "test:coverage": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test --experimental-test-coverage 'dist/tests/**/*.spec.js'",
+    "test": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test 'dist/tests/**/*.spec.js' 'dist/examples/**/*.js'",
+    "test:coverage": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test --experimental-test-coverage 'dist/tests/**/*.spec.js' 'dist/examples/**/*.js'",
     "bench": "node --expose-gc dist/bench/index.js",
+    "examples": "node --test 'dist/examples/**/*.js'",
     "clean:all": "npm run clean:dist && npm run clean:modules && npm run clean:lock",
     "clean:modules": "rm -rf node_modules",
     "clean:lock": "rm -rf package-lock.json",
     "clean:dist": "rm -rf dist"
-  },
-  "dependencies": {
-    "camelcase": "^9.0.0",
-    "to-fast-properties": "^4.0.0",
-    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@runtyped/typescript": "3.0.1",

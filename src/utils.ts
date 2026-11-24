@@ -9,34 +9,10 @@
  * You should have received a copy of the MIT License along with this program.
  */
 
-import { stringify, v4 } from 'uuid';
-
 export class NoTypeReceived extends Error {
     constructor(message: string = 'No type information received. Circular import or no runtime type available.') {
         super(message);
     }
-}
-
-/**
- * Returns a new UUID v4 as string.
- */
-export function uuid(): string {
-    return v4();
-}
-
-/**
- * Writes a new uuid v4 into an existing buffer, and returns the same buffer.
- */
-export function writeUuid(buffer: Uint8Array, offset: number = 0): Uint8Array {
-    v4(undefined, buffer, offset);
-    return buffer;
-}
-
-/**
- * Stringify an exising Uint8Array buffer.
- */
-export function stringifyUuid(buffer: Uint8Array, offset: number = 0): string {
-    return stringify(buffer, offset);
 }
 
 export type Binary = ArrayBuffer | Uint8Array | Int8Array | Uint8ClampedArray | Uint16Array | Int16Array | Uint32Array | Int32Array | Float32Array | Float64Array;

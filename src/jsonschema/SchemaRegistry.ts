@@ -9,7 +9,7 @@ import {
   TypeUnion,
   typeAnnotation,
 } from '../reflection/type.js';
-import camelcase from "camelcase";
+import { camelCase } from "./camelcase.js";
 import { SchemaNameConflictError } from "./errors.js";
 import { Schema } from "./types.js";
 
@@ -55,7 +55,7 @@ export class SchemaRegistry {
         ? t.arguments ?? []
         : t.typeArguments ?? [];
 
-    return camelcase([rootName, ...args.map((a) => this.getTypeKey(a))], {
+    return camelCase([rootName, ...args.map((a) => this.getTypeKey(a))], {
       pascalCase: true,
     });
   }
@@ -78,7 +78,7 @@ export class SchemaRegistry {
     ) {
       return this.getSchemaKey(t);
     } else if (t.kind === ReflectionKind.array) {
-      return camelcase([this.getTypeKey(t.type), "Array"], {
+      return camelCase([this.getTypeKey(t.type), "Array"], {
         pascalCase: false,
       });
     } else {

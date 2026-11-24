@@ -270,22 +270,6 @@ function exportEntityOptions(type: TypeClass | TypeObjectLiteral, result: Serial
         changed = true;
         entityAttributes.description = reflection.description;
     }
-    if (reflection.databaseSchemaName !== undefined) {
-        changed = true;
-        entityAttributes.database = reflection.databaseSchemaName;
-    }
-    if (reflection.collectionName !== undefined) {
-        changed = true;
-        entityAttributes.collection = reflection.collectionName;
-    }
-    if (reflection.singleTableInheritance) {
-        changed = true;
-        entityAttributes.singleTableInheritance = reflection.singleTableInheritance;
-    }
-    if (reflection.indexes.length) {
-        changed = true;
-        entityAttributes.indexes = reflection.indexes;
-    }
 
     if (changed) {
         result.entityOptions = entityAttributes;
@@ -298,10 +282,6 @@ function assignEntityOptions(type: TypeClass | TypeObjectLiteral, serialized: Se
 
     if (serialized.entityOptions.name !== undefined) entity.name = serialized.entityOptions.name;
     if (serialized.entityOptions.description !== undefined) entity.description = serialized.entityOptions.description;
-    if (serialized.entityOptions.database !== undefined) entity.database = serialized.entityOptions.database;
-    if (serialized.entityOptions.collection !== undefined) entity.collection = serialized.entityOptions.collection;
-    if (serialized.entityOptions.singleTableInheritance !== undefined) entity.singleTableInheritance = serialized.entityOptions.singleTableInheritance;
-    if (serialized.entityOptions.indexes !== undefined) entity.indexes = serialized.entityOptions.indexes;
 
     entityAnnotation.replaceType(type, [entity]);
 }
@@ -793,9 +773,9 @@ function deserialize(type: SerializedType | SerializedTypeReference, state: Dese
     if (isWithSerializedAnnotations(type) && isWithAnnotations(result) && type.decorators) {
         result.annotations ||= {};
         for (const scheduledDecorator of type.decorators) {
+            const dec = deserialize(scheduledDecorator, state) as TypeObjectLiteral;
             for (const decorator of typeDecorators) {
-                const dec = deserialize(scheduledDecorator, state) as TypeObjectLiteral;
-                decorator(result.annotations, dec);
+                if (decorator(result.annotations, dec)) break;
             }
         }
     }

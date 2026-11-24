@@ -3,7 +3,8 @@ import { expect } from './expect/index.js';
 import { typeInfer } from '../src/reflection/processor.js';
 import { ReflectionClass, typeOf } from '../src/reflection/reflection.js';
 import {
-    Entity, entityAnnotation,
+    Entity,
+    entityAnnotation,
     float,
     InlineRuntimeType,
     Reference,
@@ -14,8 +15,7 @@ import {
     TypeLiteral,
     TypeObjectLiteral,
     TypePropertySignature,
-    Unique,
-    widenLiteral
+    widenLiteral,
 } from '../src/reflection/type.js';
 import { expectEqualType } from './utils.js';
 import { Maximum, MinLength } from '../src/type-annotations.js';
@@ -80,14 +80,14 @@ test('dynamic type definition for schema definition', () => {
     const schemas = [
         {
             name: 'User',
-            tableName: 'users',
+            description: 'Registered users',
             properties: [
-                { name: 'username', type: 'string', unique: true, minLength: 6 },
+                { name: 'username', type: 'string', minLength: 6 },
             ],
         },
         {
             name: 'Fiction',
-            tableName: 'fictions',
+            description: 'Works of fiction',
             properties: [
                 { name: 'title', type: 'string', minLength: 2 },
                 { name: 'price', type: 'float', required: true, max: 999 },
@@ -102,7 +102,7 @@ test('dynamic type definition for schema definition', () => {
         const type = types[schema.name] = { kind: ReflectionKind.objectLiteral, id: 0, types: [] } as TypeObjectLiteral;
         type.typeName = schema.name;
         //@entity decorator / Entity<> type
-        entityAnnotation.registerType(type, { name: schema.name, collection: schema.tableName });
+        entityAnnotation.registerType(type, { name: schema.name, description: schema.description });
     }
 
     //now populate all the information we have
@@ -121,11 +121,11 @@ test('dynamic type definition for schema definition', () => {
     expect(validate({ username: '123' }, types['User'])).toEqual([{ path: 'username', code: 'minLength', message: 'Min length is 6', value: "123" }]);
 
     const userReflection = ReflectionClass.from(types['User']);
-    expect(entityAnnotation.getFirst(types['User'])?.collection).toBe('users');
+    expect(entityAnnotation.getFirst(types['User'])?.description).toBe('Registered users');
     expect(userReflection.getClassName()).toBe('User');
-    expect(userReflection.getCollectionName()).toBe('users');
+    expect(userReflection.getDescription()).toBe('Registered users');
 
-    function makeProperty(parent: TypeObjectLiteral, prop: { name: string, type: string, minLength?: number, max?: number, required?: boolean, refClassName?: string, unique?: boolean }): TypePropertySignature {
+    function makeProperty(parent: TypeObjectLiteral, prop: { name: string, type: string, minLength?: number, max?: number, required?: boolean, refClassName?: string }): TypePropertySignature {
         let type: Type = { kind: ReflectionKind.unknown };
 
         switch (prop.type) {
@@ -151,7 +151,6 @@ test('dynamic type definition for schema definition', () => {
         type.annotations = {};
         if (prop.max) type.decorators.push(typeOf<Maximum<typeof prop.max>>());
         if (prop.minLength) type.decorators.push(typeOf<MinLength<typeof prop.minLength>>());
-        if (prop.unique) type.decorators.push(typeOf<Unique>());
         if (prop.refClassName) type.decorators.push(typeOf<Reference>());
 
         for (const decorator of type.decorators) {

@@ -14,7 +14,7 @@ import { expect } from './expect/index.js';
 import { Serializer, registerDefaultHandlers, registerTypeGuards } from '../index.js';
 import { isReferenceInstance } from '../src/reference.js';
 import { cast } from '../src/serializer-facade.js';
-import { PrimaryKey, Reference, float, float32, int8, integer } from '../src/type-annotations.js';
+import { Identifier, Reference, float, float32, int8, integer } from '../src/type-annotations.js';
 import { is, isStrict, isWeak, typeGuardStrict, typeGuardWeak } from '../src/typeguard.js';
 
 test('primitive string', () => {
@@ -320,8 +320,8 @@ test('multiple index signature', () => {
 });
 
 test('brands', () => {
-    expect(is<number & PrimaryKey>(2)).toEqual(true);
-    expect(is<number & PrimaryKey>('2')).toEqual(false);
+    expect(is<number & Identifier>(2)).toEqual(true);
+    expect(is<number & Identifier>('2')).toEqual(false);
 });
 
 test('generic interface', () => {
@@ -438,7 +438,7 @@ test('union literal', () => {
 
 test('union classes with generic', () => {
     class Group {
-        id: number & PrimaryKey = 0;
+        id: number & Identifier = 0;
         second: string = '';
     }
 

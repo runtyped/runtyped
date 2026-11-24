@@ -13,17 +13,20 @@ import {
 import {
     assertType,
     Embedded,
+    embeddedAnnotation,
     Excluded,
     excludedAnnotation,
     findMember,
+    getAnnotationMeta,
     Group,
     groupAnnotation,
     indexAccess,
     InlineRuntimeType,
     isSameType,
-    PrimaryKey,
-    primaryKeyAnnotation,
+    Identifier,
+    identifierAnnotation,
     ReflectionKind,
+    registerTypeDecorator,
     ResetAnnotation,
     resolveTypeMembers,
     stringifyResolvedType,
@@ -34,12 +37,12 @@ import {
     TypeObjectLiteral,
     TypeProperty,
     typeToObject,
-    UUID,
     validationAnnotation,
 } from '../src/reflection/type.js';
 import { isExtendable } from '../src/reflection/extends.js';
 import { expectEqualType } from './utils.js';
 import { ClassType, TypeAnnotation } from '../src/core/index.js';
+import { AnnotationDefinition } from '../src/type-annotations.js';
 import { Partial } from '../src/changes.js';
 import { MaxLength, MinLength } from '../src/type-annotations.js';
 
@@ -201,13 +204,13 @@ test('copy index access', () => {
     expect(groups[0]).toBe('a');
 });
 
-test('reset primary decorator', () => {
+test('reset identifier decorator', () => {
     interface User {
-        id: number & PrimaryKey;
+        id: number & Identifier;
     }
 
     interface UserCreationPayload {
-        id: User['id'] & ResetAnnotation<'primaryKey'>;
+        id: User['id'] & ResetAnnotation<'identifier'>;
     }
 
     const type = typeOf<UserCreationPayload>();
@@ -215,7 +218,7 @@ test('reset primary decorator', () => {
     const id = findMember('id', type.types);
     assertType(id, ReflectionKind.propertySignature);
     assertType(id.type, ReflectionKind.number);
-    expect(primaryKeyAnnotation.isPrimaryKey(id.type)).toBe(false);
+    expect(identifierAnnotation.isIdentifier(id.type)).toBe(false);
 });
 
 test('reset type annotation', () => {
@@ -254,11 +257,74 @@ test('reset type annotation', () => {
     }
 });
 
+test('reset embedded annotation', () => {
+    interface Address {
+        street: string;
+    }
+
+    interface User {
+        address: Embedded<Address, { prefix: 'address_' }> & Excluded<'json'>;
+    }
+
+    interface UserPayload {
+        address: User['address'] & ResetAnnotation<'embedded'>;
+    }
+
+    const user = typeOf<User>();
+    assertType(user, ReflectionKind.objectLiteral);
+    const userAddress = findMember('address', user.types);
+    assertType(userAddress, ReflectionKind.propertySignature);
+    expect(embeddedAnnotation.getFirst(userAddress.type)).toEqual({ prefix: 'address_' });
+
+    const payload = typeOf<UserPayload>();
+    assertType(payload, ReflectionKind.objectLiteral);
+    const address = findMember('address', payload.types);
+    assertType(address, ReflectionKind.propertySignature);
+    expect(embeddedAnnotation.getFirst(address.type)).toBe(undefined);
+    // Resetting `embedded` must not touch other annotations.
+    expect(excludedAnnotation.isExcluded(address.type, 'json')).toBe(true);
+});
+
+test('reset custom type annotation only removes the named one', () => {
+    type Sensitive = TypeAnnotation<'sensitive'>;
+    type Audited = TypeAnnotation<'audited'>;
+
+    interface User {
+        password: string & Sensitive & Audited;
+    }
+
+    interface UserPayload {
+        password: User['password'] & ResetAnnotation<'audited'>;
+    }
+
+    const payload = typeOf<UserPayload>();
+    assertType(payload, ReflectionKind.objectLiteral);
+    const password = findMember('password', payload.types);
+    assertType(password, ReflectionKind.propertySignature);
+    expect(typeAnnotation.getAnnotations(password.type).map(v => v.name)).toEqual(['sensitive']);
+});
+
+test('registered type decorators take precedence over the built-in one', () => {
+    const trackedAnnotation = new AnnotationDefinition('tracked');
+    registerTypeDecorator((annotations, decorator) => {
+        if (getAnnotationMeta(decorator)?.id !== 'tracked') return false;
+        trackedAnnotation.register(annotations, true);
+        return true;
+    });
+
+    type Tracked = TypeAnnotation<'tracked'>;
+    const type = typeOf<string & Tracked>();
+    expect(trackedAnnotation.getAnnotations(type)).toEqual([true]);
+    // Handled by the custom decorator, so not stored as a generic annotation.
+    expect(typeAnnotation.getAnnotations(type)).toEqual([]);
+});
+
 test('type alias preserved', () => {
     type MyString = string;
     expect(stringifyType(typeOf<MyString>())).toBe('MyString');
 
-    expect(stringifyType(typeOf<UUID>())).toBe('UUID');
+    type Tagged = string & { __tag?: true };
+    expect(stringifyType(typeOf<Tagged>())).toBe('Tagged');
 });
 
 test('stringify', () => {

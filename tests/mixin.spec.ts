@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { expect } from './expect/index.js';
 import { mixin } from '../src/mixin.js';
-import { assertType, AutoIncrement, PrimaryKey, ReflectionKind, resolveTypeMembers } from '../src/reflection/type.js';
+import { assertType, Identifier, ReflectionKind, resolveTypeMembers } from '../src/reflection/type.js';
 import { MinLength } from '../src/type-annotations.js';
 import { reflect, ReflectionClass } from '../src/reflection/reflection.js';
 import { deserialize } from '../src/serializer-facade.js';
@@ -18,7 +18,7 @@ test('mixin base', () => {
     }
 
     class User extends mixin(Timestampable, SoftDeleted) {
-        id: number & PrimaryKey & AutoIncrement = 0;
+        id: number & Identifier = 0;
 
         constructor(
             public username: string & MinLength<3>

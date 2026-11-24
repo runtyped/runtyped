@@ -212,94 +212,12 @@ export type Data<Name extends string, Value> = TypeAnnotation<'data', [Name, Val
  * ```
  */
 export type ResetAnnotation<Name extends string> = TypeAnnotation<'reset', Name>;
-export type IndexOptions = {
-    name?: string;
-    //index size. Necessary for blob/longtext, etc.
-    size?: number;
-
-    unique?: boolean;
-    spatial?: boolean;
-    sparse?: boolean;
-
-    //only in mongodb
-    fulltext?: boolean;
-    where?: string;
-
-    expireAfterSeconds?: number;
-};
-export type Unique<Options extends IndexOptions = {}> = TypeAnnotation<'index', Options & { unique: true }>;
-export type Index<Options extends IndexOptions = {}> = TypeAnnotation<'index', Options>;
-
-export interface DatabaseFieldOptions {
-    /**
-     * The name of the column in the database.
-     * e.g. `userName: string & DatabaseField<{name: 'user_name'}>`
-     *
-     * Can alternatively also be configured by using a different NamingStrategy.
-     */
-    name?: string;
-
-    /**
-     *
-     * e.g. `field: string & MySQL<{type: 'VARCHAR(255)'}>`
-     */
-    type?: string;
-
-    /**
-     * If the property is on a class, its initializer/default value is per default used.
-     * This can be overridden using this option.
-     * e.g. `field: string & MySQL<{default: 'abc'}>`
-     */
-    default?: any;
-
-    /**
-     * e.g. `field: string & MySQL<{defaultExpr: 'NOW()'}>`
-     */
-    defaultExpr?: any;
-
-    /**
-     * If true no default column value is inferred from the property initializer/default value.
-     * e.g. `field: string & MySQL<{noDefault: true}> = ''`
-     */
-    noDefault?: true;
-
-    /**
-     * Skip this property in all queries and database migration files.
-     */
-    skip?: true;
-
-    /**
-     * Skip this property in database migration files. This excludes the property from the database, but
-     * keeps it in the queries.
-     */
-    skipMigration?: true;
-}
-
-export interface MySQLOptions extends DatabaseFieldOptions {}
-
-export interface PostgresOptions extends DatabaseFieldOptions {}
-
-export interface SqliteOptions extends DatabaseFieldOptions {}
-
-type Database<Name extends string, Options extends { [name: string]: any }> = TypeAnnotation<
-    'database',
-    [Name, Options]
->;
-export type MySQL<Options extends MySQLOptions> = Database<'mysql', Options>;
-export type Postgres<Options extends PostgresOptions> = Database<'postgres', Options>;
-export type SQLite<Options extends SqliteOptions> = Database<'sqlite', Options>;
-export type DatabaseField<Options extends DatabaseFieldOptions, Name extends string = '*'> = Database<Name, Options>;
-
 /**
  * note: if this is adjusted, make sure to adjust ReflectionClass, entityAnnotation, and type serializer accordingly.
  */
 export interface EntityOptions {
     name?: string;
     description?: string;
-    collection?: string;
-    database?: string;
-    singleTableInheritance?: boolean;
-    indexes?: { names: string[]; options: IndexOptions }[];
 }
 
 /**
@@ -307,66 +225,30 @@ export interface EntityOptions {
  *
  * ```typescript
  * interface User extends Entity<{name: 'user'}> {
- *     id: number & PrimaryKey & AutoIncrement;
- *     username: string & Unique;
+ *     id: number & Identifier;
+ *     username: string;
  * }
  * ```
  */
 export type Entity<T extends EntityOptions> = {} & TypeAnnotation<'entity', T>;
 /**
- * Marks a property as primary key.
+ * Marks a property as the identifier of its object: the value that uniquely
+ * identifies an instance, e.g. when it is the target of a `Reference`.
  * ```typescript
- * class Entity {
- *     id: number & Primary = 0;
+ * class User {
+ *     id: number & Identifier = 0;
  * }
  * ```
  */
-export type PrimaryKey = TypeAnnotation<'primaryKey'>;
+export type Identifier = TypeAnnotation<'identifier'>;
 type TypeKeyOf<T> = T[keyof T];
-export type PrimaryKeyFields<T> = any extends T
+export type IdentifierFields<T> = any extends T
     ? any
-    : { [P in keyof T]: Required<T[P]> extends Required<PrimaryKey> ? T[P] : never };
-export type PrimaryKeyType<T> = any extends T ? any : TypeKeyOf<PrimaryKeyFields<T>>;
+    : { [P in keyof T]: Required<T[P]> extends Required<Identifier> ? T[P] : never };
+export type IdentifierType<T> = any extends T ? any : TypeKeyOf<IdentifierFields<T>>;
 export type ReferenceFields<T> = {
     [P in keyof T]: Required<T[P]> extends Required<Reference> | Required<BackReference> ? T[P] : never;
 };
-/**
- * Marks a primary property key as auto-increment.
- *
- * ```typescript
- * class Entity {
- *     id: number & Primary & AutoIncrement = 0;
- * }
- * ```
- */
-export type AutoIncrement = TypeAnnotation<'autoIncrement'>;
-/**
- * UUID v4, as string, serialized as string in JSON, and binary in database.
- * Use `uuid()` as handy initializer.
- *
- * ```typescript
- * class Entity {
- *     id: UUID = uuid();
- * }
- * ```
- */
-export type UUID = string & TypeAnnotation<'UUIDv4'>;
-/**
- * MongoDB's ObjectID type. serialized as string in JSON, ObjectID in database.
- */
-export type MongoId = string & TypeAnnotation<'mongoId'>;
-/**
- * NanoId, a URL-friendly unique identifier as string.
- * Default length is 21 characters using URL-safe alphabet.
- * Use `nanoid()` as handy initializer.
- *
- * ```typescript
- * class Entity {
- *     id: NanoId & PrimaryKey = nanoid();
- * }
- * ```
- */
-export type NanoId = string & TypeAnnotation<'nanoid'>;
 /**
  * Same as `bigint` but serializes to unsigned binary with unlimited size (instead of 8 bytes in most databases).
  * Negative values will be converted to positive (abs(x)).
@@ -430,7 +312,7 @@ export interface InlineOptions {
 /**
  * Marks a Reference field to be serialized as a nested object instead of just the foreign key.
  *
- * By default, `& Reference` fields serialize as FK only (just the primary key).
+ * By default, `& Reference` fields serialize as FK only (just the identifier).
  * Adding `& Inline` changes this to serialize the full nested object.
  *
  * @example
@@ -519,23 +401,6 @@ export const typeAnnotation = new (class extends AnnotationDefinition<{ name: st
         return;
     }
 })('meta');
-export const indexAnnotation = new AnnotationDefinition<IndexOptions>('index');
-export const databaseAnnotation = new (class extends AnnotationDefinition<{
-    name: string;
-    options: { [name: string]: any };
-}> {
-    getDatabase<T extends DatabaseFieldOptions>(type: Type, name: string): T | undefined {
-        let options: T | undefined = undefined;
-        for (const annotation of this.getAnnotations(type)) {
-            if (annotation.name === '*' || annotation.name === name) {
-                if (!options) options = {} as T;
-                Object.assign(options, annotation.options as T);
-            }
-        }
-        return options as any;
-    }
-})('database');
-
 export const referenceAnnotation = new AnnotationDefinition<ReferenceOptions>('reference');
 export const inlineAnnotation = new AnnotationDefinition<InlineOptions>('inline');
 export const entityAnnotation = new (class extends AnnotationDefinition<EntityOptions> {
@@ -554,12 +419,11 @@ export const entityAnnotation = new (class extends AnnotationDefinition<EntityOp
     }
 })('entity');
 export const mapNameAnnotation = new AnnotationDefinition<{ name: string; serializer?: string }>('mapName');
-export const autoIncrementAnnotation = new AnnotationDefinition('autoIncrement');
-export const primaryKeyAnnotation = new (class extends AnnotationDefinition {
-    isPrimaryKey(type: Type): boolean {
+export const identifierAnnotation = new (class extends AnnotationDefinition {
+    isIdentifier(type: Type): boolean {
         return this.getAnnotations(type).length > 0;
     }
-})('primaryKey');
+})('identifier');
 
 export interface BackReferenceOptionsResolved {
     /**
@@ -576,28 +440,9 @@ export interface BackReferenceOptionsResolved {
 }
 
 export const backReferenceAnnotation = new AnnotationDefinition<BackReferenceOptionsResolved>('backReference');
-export const mongoIdAnnotation = new AnnotationDefinition('mongoID');
-export const uuidAnnotation = new AnnotationDefinition('uuid');
-export const nanoidAnnotation = new AnnotationDefinition('nanoid');
 
-export function isUUIDType(type: Type): boolean {
-    return uuidAnnotation.getFirst(type) !== undefined;
-}
-
-export function isPrimaryKeyType(type: Type): boolean {
-    return primaryKeyAnnotation.isPrimaryKey(type);
-}
-
-export function isAutoIncrementType(type: Type): boolean {
-    return autoIncrementAnnotation.getFirst(type) !== undefined;
-}
-
-export function isMongoIdType(type: Type): boolean {
-    return mongoIdAnnotation.getFirst(type) !== undefined;
-}
-
-export function isNanoIdType(type: Type): boolean {
-    return nanoidAnnotation.getFirst(type) !== undefined;
+export function isIdentifierType(type: Type): boolean {
+    return identifierAnnotation.isIdentifier(type);
 }
 
 export function isBinaryBigIntType(type: Type): boolean {

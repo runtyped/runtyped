@@ -6,7 +6,7 @@ import { unpopulatedSymbol } from '../src/core.js';
 import { createReference } from '../src/reference.js';
 import { ReceiveType, ReflectionClass, resolveReceiveType } from '../src/reflection/reflection.js';
 import { cast, cloneClass, serialize } from '../src/serializer-facade.js';
-import { AutoIncrement, BackReference, MapName, MongoId, PrimaryKey, Reference, UUID, isReferenceType } from '../src/type-annotations.js';
+import { BackReference, MapName, Identifier, Reference, isReferenceType } from '../src/type-annotations.js';
 
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();
@@ -114,7 +114,7 @@ test('partial keeps explicitely undefined fields', () => {
     }
 
     class Purchase {
-        id: number & PrimaryKey & AutoIncrement = 0;
+        id: number & Identifier = 0;
 
         sentAt?: Date;
         canceledAt?: Date;
@@ -256,7 +256,7 @@ test('model 1', () => {
 });
 
 class Team {
-    id: number & PrimaryKey & AutoIncrement = 0;
+    id: number & Identifier = 0;
     version: number = 0;
     lead?: User & Reference;
 
@@ -264,7 +264,7 @@ class Team {
 }
 
 class User {
-    id: number & PrimaryKey & AutoIncrement = 0;
+    id: number & Identifier = 0;
     version: number = 0;
     teams: Team[] & BackReference<{ via: typeof UserTeam }> = [];
 
@@ -272,7 +272,7 @@ class User {
 }
 
 class UserTeam {
-    id: number & PrimaryKey & AutoIncrement = 0;
+    id: number & Identifier = 0;
 
     version: number = 0;
 
@@ -376,10 +376,6 @@ test('relation 2', () => {
     }
 });
 
-// test('invalid', () => {
-//     expect(roundTrip<UUID>(new Model as any)).toEqual(RoundTripExcluded);
-// });
-
 test('regex', () => {
     expect(roundTrip<RegExp>(/foo/)).toEqual(/foo/);
 });
@@ -479,12 +475,6 @@ test('optional basics', () => {
     expect(roundTrip<boolean | undefined>(undefined)).toBe(undefined);
     expect(roundTrip<boolean | undefined>(null)).toBe(undefined);
 
-    expect(roundTrip<UUID | undefined>(undefined)).toBe(undefined);
-    expect(roundTrip<UUID | undefined>(null)).toBe(undefined);
-
-    expect(roundTrip<MongoId | undefined>(undefined)).toBe(undefined);
-    expect(roundTrip<MongoId | undefined>(null)).toBe(undefined);
-
     expect(roundTrip<Date | undefined>(undefined)).toBe(undefined);
     expect(roundTrip<Date | undefined>(null)).toBe(undefined);
 
@@ -541,12 +531,6 @@ test('nullable basics', () => {
 
     expect(roundTrip<Date | null>(undefined)).toBe(null);
     expect(roundTrip<Date | null>(null)).toBe(null);
-
-    expect(roundTrip<UUID | null>(undefined)).toBe(null);
-    expect(roundTrip<UUID | null>(null)).toBe(null);
-
-    expect(roundTrip<MongoId | null>(undefined)).toBe(null);
-    expect(roundTrip<MongoId | null>(null)).toBe(null);
 
     expect(roundTrip<Record<string, string> | null>(undefined)).toBe(null);
     expect(roundTrip<Record<string, string> | null>(null)).toBe(null);
@@ -787,9 +771,9 @@ test('primary key only for reference becomes reference', () => {
     expect(deserializeFromJson<Team>({ id: 1, name: 'a', lead: { id: 34 } }).lead).toBeInstanceOf(User);
 });
 
-test('array with mongoid', () => {
+test('array of object literals', () => {
     interface Model {
-        references: Array<{ cls: string; id: MongoId }>;
+        references: Array<{ cls: string; id: string }>;
     }
 
     expect(deserializeFromJson<Model>({ references: [{ cls: 'User', id: '5f3b9b3b9c6b2b1b1c0b1b1b' }] })).toEqual({

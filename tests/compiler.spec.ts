@@ -2,7 +2,7 @@
 import { test, describe } from 'node:test';
 import { expect } from './expect/index.js';
 import { reflect, reflect as reflect2, ReflectionClass, removeTypeName, typeOf as typeOf2 } from '../src/reflection/reflection.js';
-import { assertType, defaultAnnotation, primaryKeyAnnotation, ReflectionKind, ReflectionVisibility, stringifyType, Type, TypeClass, TypeFunction, TypeMethod, TypeObjectLiteral, TypeProperty, TypeUnion } from '../src/reflection/type.js';
+import { assertType, defaultAnnotation, identifierAnnotation, ReflectionKind, ReflectionVisibility, stringifyType, Type, TypeClass, TypeFunction, TypeMethod, TypeObjectLiteral, TypeProperty, TypeUnion } from '../src/reflection/type.js';
 import { ReflectionOp } from '../src/type-spec/index.js';
 import { ClassType, isObject } from '../src/core/index.js';
 import { pack, resolveRuntimeType } from '../src/reflection/processor.js';
@@ -1680,9 +1680,9 @@ test('interface extends generic', () => {
 
 test('interface extends decorator', () => {
     const code = `
-        type PrimaryKey = { __meta?: never & ['primaryKey'] };
+        type Identifier = { __meta?: never & ['identifier'] };
 
-        interface User extends PrimaryKey {
+        interface User extends Identifier {
             id: number;
         }
         return typeOf<User>();
@@ -1701,7 +1701,7 @@ test('interface extends decorator', () => {
 
     assertType(type, ReflectionKind.objectLiteral);
     expect(type.annotations).toEqual({
-        [primaryKeyAnnotation.symbol]: [true]
+        [identifierAnnotation.symbol]: [true]
     });
 });
 

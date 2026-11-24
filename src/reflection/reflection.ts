@@ -11,13 +11,10 @@
 
 import {
     assertType,
-    autoIncrementAnnotation,
     BackReferenceOptionsResolved,
     clearTypeJitContainer,
     copyAndSetParent,
     dataAnnotation,
-    databaseAnnotation,
-    DatabaseFieldOptions,
     embeddedAnnotation,
     entityAnnotation,
     EntityOptions,
@@ -28,13 +25,11 @@ import {
     getTypeJitContainer,
     groupAnnotation,
     hasMember,
-    indexAnnotation,
-    IndexOptions,
     isBackReferenceType,
     isReferenceType,
     isType,
     memberNameToString,
-    primaryKeyAnnotation,
+    identifierAnnotation,
     ReferenceOptions,
     ReflectionKind,
     ReflectionVisibility,
@@ -54,7 +49,6 @@ import {
 import { AbstractClassType, arrayRemoveItem, ClassType, getClassName, isArray, isClass, isFunction, isGlobalClass, isPrototypeOfBase, stringifyValueWithType } from '../core/index.js';
 import { Packed, resolvePacked, resolveRuntimeType } from './processor.js';
 import { NoTypeReceived } from '../utils.js';
-import { findCommonLiteral } from '../inheritance.js';
 import type { ValidateFunction } from '../type-annotations.js';
 import { isWithDeferredDecorators } from '../decorator.js';
 import { SerializedTypes, serializeType } from '../type-serialization.js';
@@ -594,8 +588,8 @@ export class ReflectionProperty {
         this.type = type;
     }
 
-    isPrimaryKey(): boolean {
-        return primaryKeyAnnotation.isPrimaryKey(this.getType());
+    isIdentifier(): boolean {
+        return identifierAnnotation.isIdentifier(this.getType());
     }
 
     isEmbedded(): boolean {
@@ -624,20 +618,8 @@ export class ReflectionProperty {
         return isBackReferenceType(this.getType());
     }
 
-    isDatabaseSkipped(database: string): boolean {
-        return databaseAnnotation.getDatabase(this.getType(), database)?.skip === true;
-    }
-
-    isDatabaseMigrationSkipped(database: string): boolean {
-        return this.isDatabaseSkipped(database) || databaseAnnotation.getDatabase(this.getType(), database)?.skipMigration === true;
-    }
-
     getBackReference(): BackReferenceOptionsResolved {
         return getBackReferenceType(this.getType());
-    }
-
-    isAutoIncrement(): boolean {
-        return autoIncrementAnnotation.getFirst(this.getType()) === true;
     }
 
     isReference(): boolean {
@@ -694,31 +676,6 @@ export class ReflectionProperty {
             throw new Error(`Could not resolve reflection class since ${this.name} is not a class|object but of type ${stringifyType(this.type)}`);
         }
         return this.cachedResolvedReflectionClass ||= resolveClassType(this.getType());
-    }
-
-    /**
-     * If undefined the property is not an index.
-     * A unique property is defined as index with IndexOptions.unique=true.
-     */
-    getIndex(): IndexOptions | undefined {
-        return indexAnnotation.getFirst(this.getType());
-    }
-
-    /**
-     * Returns database specific options, if defined
-     *
-     * ```typescript
-     * interface User {
-     *     logins: number & DatabaseField<{type: 'integer(8)'}>;
-     *
-     *     //of for a specific db engine
-     *     logins: number & Sqlite<{type: 'integer(8)'}>;
-     * }
-     *
-     * ```
-     */
-    getDatabase<T extends DatabaseFieldOptions>(name: string): T | undefined {
-        return databaseAnnotation.getDatabase<T>(this.getType(), name);
     }
 
     clone(reflectionClass?: ReflectionClass<any>, property?: TypeProperty | TypePropertySignature): ReflectionProperty {
@@ -862,21 +819,13 @@ export class TData {
 
 export class EntityData {
     name?: string;
-    collectionName?: string;
-    databaseSchemaName?: string;
     disableConstructor: boolean = false;
     data: { [name: string]: any } = {};
-    indexes: { names: string[], options: IndexOptions }[] = [];
-    singleTableInheritance?: true;
 }
 
 function applyEntityOptions(reflection: ReflectionClass<any>, entityOptions: EntityOptions) {
     if (entityOptions.name !== undefined) reflection.name = entityOptions.name;
     if (entityOptions.description !== undefined) reflection.description = entityOptions.description;
-    if (entityOptions.collection !== undefined) reflection.collectionName = entityOptions.collection;
-    if (entityOptions.database !== undefined) reflection.databaseSchemaName = entityOptions.database;
-    if (entityOptions.singleTableInheritance !== undefined) reflection.singleTableInheritance = entityOptions.singleTableInheritance;
-    if (entityOptions.indexes !== undefined) reflection.indexes = entityOptions.indexes;
 }
 
 /**
@@ -905,45 +854,7 @@ export class ReflectionClass<T> {
      */
     name?: string;
 
-    databaseSchemaName?: string;
-
     disableConstructor: boolean = false;
-
-    /**
-     * The collection name, used in database context (also known as table name).
-     *
-     * Usually, if this is not set, `name` will be used.
-     *
-     * ```typescript
-     * @entity.collection('users').name('user')
-     * class User {
-     *
-     * }
-     * ```
-     */
-    collectionName?: string;
-
-    /**
-     * True when @entity.singleTableInheritance was set.
-     */
-    singleTableInheritance: boolean = false;
-
-    /**
-     * Contains all indexed, multi-field using entity.index and all indexes from properties.
-     *
-     * ```typescript
-     * @entity
-     *    .collection('users')
-     *    .name('user')
-     *    .index(['username', 'email'])
-     *    .index(['email', 'region'], {unique: true})
-     * class User {
-     *     username: string;
-     *     email: string;
-     * }
-     * ```
-     */
-    indexes: { names: string[], options: IndexOptions }[] = [];
 
     protected propertyNames: string[] = [];
     protected methodNames: string[] = [];
@@ -955,27 +866,18 @@ export class ReflectionClass<T> {
      */
     protected references: ReflectionProperty[] = [];
 
-    protected primaries: ReflectionProperty[] = [];
-
-    protected autoIncrements: ReflectionProperty[] = [];
+    protected identifiers: ReflectionProperty[] = [];
 
     /**
      * If a custom validator method was set via @t.validator, then this is the method name.
      */
     public validationMethod?: string | symbol | number | TypeTemplateLiteral;
 
-    /**
-     * A class using @t.singleTableInheritance registers itself in this array in its super class.
-     */
-    public subClasses: ReflectionClass<any>[] = [];
-
     constructor(public readonly type: TypeClass | TypeObjectLiteral, public readonly parent?: ReflectionClass<any>) {
         if (type.kind !== ReflectionKind.class && type.kind !== ReflectionKind.objectLiteral) throw new Error('Only class, interface, or object literal type possible');
 
         if (parent) {
             this.name = parent.name;
-            this.collectionName = parent.collectionName;
-            this.databaseSchemaName = parent.databaseSchemaName;
             this.description = parent.description;
 
             for (const member of parent.getProperties()) {
@@ -1025,11 +927,6 @@ export class ReflectionClass<T> {
     clone(): ReflectionClass<any> {
         const reflection = new ReflectionClass(copyAndSetParent(this.type), this.parent);
         reflection.name = this.name;
-        reflection.collectionName = this.collectionName;
-        reflection.databaseSchemaName = this.databaseSchemaName;
-        reflection.singleTableInheritance = this.singleTableInheritance;
-        reflection.indexes = this.indexes.slice();
-        reflection.subClasses = this.subClasses.slice();
         reflection.data = { ...this.data };
         reflection.description = this.description;
 
@@ -1079,10 +976,6 @@ export class ReflectionClass<T> {
         return this.description;
     }
 
-    getCollectionName(): string {
-        return this.collectionName || this.getName();
-    }
-
     hasProperty(name: string | symbol | number): boolean {
         return this.propertyNames.includes(memberNameToString(name));
     }
@@ -1091,27 +984,23 @@ export class ReflectionClass<T> {
         return this.methodNames.includes(memberNameToString(name));
     }
 
-    getPrimary(): ReflectionProperty {
-        if (!this.primaries.length) {
-            throw new Error(`Class ${this.getClassName()} has no primary key.`);
+    getIdentifier(): ReflectionProperty {
+        if (!this.identifiers.length) {
+            throw new Error(`Class ${this.getClassName()} has no identifier.`);
         }
-        return this.primaries[0];
-    }
-
-    getAutoIncrement(): ReflectionProperty | undefined {
-        return this.autoIncrements[0];
+        return this.identifiers[0];
     }
 
     public isSchemaOf(classType: ClassType): boolean {
         return isPrototypeOfBase(this.getClassType(), classType);
     }
 
-    hasPrimary(): boolean {
-        return this.primaries.length > 0;
+    hasIdentifier(): boolean {
+        return this.identifiers.length > 0;
     }
 
-    getPrimaries(): ReflectionProperty[] {
-        return this.primaries;
+    getIdentifiers(): ReflectionProperty[] {
+        return this.identifiers;
     }
 
     /**
@@ -1137,14 +1026,7 @@ export class ReflectionClass<T> {
             arrayRemoveItem(this.references, property);
         }
 
-        if (property.isPrimaryKey()) arrayRemoveItem(this.primaries, property);
-        if (property.isAutoIncrement()) arrayRemoveItem(this.autoIncrements, property);
-
-        const index = property.getIndex();
-        if (index) {
-            const indexFound = this.indexes.findIndex(v => v.names.length === 0 && v.names[0] === property.name);
-            if (indexFound !== -1) this.indexes.splice(indexFound, 1);
-        }
+        if (property.isIdentifier()) arrayRemoveItem(this.identifiers, property);
     }
 
     registerProperty(property: ReflectionProperty) {
@@ -1163,13 +1045,7 @@ export class ReflectionClass<T> {
             this.references.push(property);
         }
 
-        if (property.isPrimaryKey()) this.primaries.push(property);
-        if (property.isAutoIncrement()) this.autoIncrements.push(property);
-
-        const index = property.getIndex();
-        if (index) {
-            this.indexes.push({ names: [property.name], options: index });
-        }
+        if (property.isIdentifier()) this.identifiers.push(property);
 
         this.getJitContainer();
     }
@@ -1224,72 +1100,10 @@ export class ReflectionClass<T> {
         }
     }
 
-    public assignedSingleTableInheritanceSubClassesByIdentifier?: { [id: string]: ReflectionClass<any> };
-
-    getAssignedSingleTableInheritanceSubClassesByIdentifier(): { [id: string]: ReflectionClass<any> } | undefined {
-        if (!this.subClasses.length) return;
-        if (this.assignedSingleTableInheritanceSubClassesByIdentifier) return this.assignedSingleTableInheritanceSubClassesByIdentifier;
-
-        let isBaseOfSingleTableEntity = false;
-        for (const schema of this.subClasses) {
-            if (schema.singleTableInheritance) {
-                isBaseOfSingleTableEntity = true;
-                break;
-            }
-        }
-
-        if (!isBaseOfSingleTableEntity) return;
-
-        const discriminant = this.getSingleTableInheritanceDiscriminantName();
-
-        for (const schema of this.subClasses) {
-            if (schema.singleTableInheritance) {
-                if (!this.assignedSingleTableInheritanceSubClassesByIdentifier) this.assignedSingleTableInheritanceSubClassesByIdentifier = {};
-                const property = schema.getProperty(discriminant);
-                assertType(property.type, ReflectionKind.literal);
-                this.assignedSingleTableInheritanceSubClassesByIdentifier[property.type.literal as string] = schema;
-            }
-        }
-        return this.assignedSingleTableInheritanceSubClassesByIdentifier;
-    }
-
-    hasSingleTableInheritanceSubClasses(): boolean {
-        return this.getAssignedSingleTableInheritanceSubClassesByIdentifier() !== undefined;
-    }
-
-    getSingleTableInheritanceDiscriminantName(): string {
-        if (!this.data.singleTableInheritanceProperty) {
-
-            // let discriminant = findCommonDiscriminant(this.subClasses);
-
-            //when no discriminator was found, find a common literal
-            const discriminant = findCommonLiteral(this.subClasses);
-
-            if (!discriminant) {
-                throw new Error(`Sub classes of ${this.getClassName()} single-table inheritance [${this.subClasses.map(v => v.getClassName())}] have no common discriminant or common literal. Please define one.`);
-            }
-            this.data.singleTableInheritanceProperty = this.getProperty(discriminant);
-        }
-
-        return (this.data.singleTableInheritanceProperty as ReflectionProperty).name;
-    }
-
     applyDecorator(data: EntityData) {
         Object.assign(this.data, data.data);
         if (data.name !== undefined) this.name = data.name;
-        if (data.collectionName !== undefined) this.collectionName = data.collectionName;
-        if (data.databaseSchemaName !== undefined) this.databaseSchemaName = data.databaseSchemaName;
         this.disableConstructor = data.disableConstructor;
-
-        this.indexes.push(...data.indexes);
-        if (data.singleTableInheritance) {
-            this.singleTableInheritance = true;
-            if (this.parent) {
-                //the subclass is only added when really needed (e.g. for tracking childs of a single table inheritance setup) otherwise it's a memory leak when a lot of classes
-                //are dynamically created.
-                this.parent.subClasses.push(this);
-            }
-        }
     }
 
     static from<T>(classTypeIn?: ReceiveType<T> | AbstractClassType<T> | TypeClass | TypeObjectLiteral | ReflectionClass<any>, args: any[] = []): ReflectionClass<T> {
@@ -1484,13 +1298,13 @@ export class ReflectionClass<T> {
         throw new Error(`Class ${this.getClassName()} has no reference to class ${getClassName(toClassType)} defined.`);
     }
 
-    public extractPrimaryKey(item: object): Partial<T> {
-        const primaryKey: Partial<T> = {};
-        for (const pk of this.getPrimaries()) {
-            (primaryKey as any)[pk.name] = (item as any)[pk.name];
+    public extractIdentifier(item: object): Partial<T> {
+        const identifier: Partial<T> = {};
+        for (const id of this.getIdentifiers()) {
+            (identifier as any)[id.name] = (item as any)[id.name];
         }
 
-        return primaryKey;
+        return identifier;
     }
 }
 

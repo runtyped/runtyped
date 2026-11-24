@@ -11,10 +11,10 @@
 import { test } from 'node:test';
 import { expect } from './expect/index.js';
 import { typeOf } from '../src/reflection/reflection.js';
-import { PrimaryKey, primaryKeyAnnotation } from '../src/reflection/type.js';
+import { Identifier, identifierAnnotation } from '../src/reflection/type.js';
 
 test('primary key', () => {
-    type t = number & PrimaryKey;
+    type t = number & Identifier;
     const type = typeOf<t>();
-    expect(primaryKeyAnnotation.isPrimaryKey(type)).toBe(true);
+    expect(identifierAnnotation.isIdentifier(type)).toBe(true);
 });

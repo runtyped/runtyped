@@ -14,7 +14,7 @@ import { typeSettings } from './core.js';
 import { ClassDecoratorResult, createClassDecoratorContext, createPropertyDecoratorContext } from './decorator-builder.js';
 import { resolveRuntimeType } from './reflection/processor.js';
 import { EntityData, ReceiveType, SerializerFn, TData } from './reflection/reflection.js';
-import type { IndexOptions, ValidateFunction } from './type-annotations.js';
+import type { ValidateFunction } from './type-annotations.js';
 
 class TDecorator {
     t = new TData();
@@ -83,10 +83,6 @@ class EntityDecorator {
         this.t.name = name;
     }
 
-    collection(name: string) {
-        this.t.collectionName = name;
-    }
-
     /**
      * Disables calling the constructor when deserializing.
      */
@@ -94,27 +90,8 @@ class EntityDecorator {
         this.t.disableConstructor = true;
     }
 
-    databaseSchema(name: string) {
-        this.t.databaseSchemaName = name;
-    }
-
-    index(names: string[], options: IndexOptions = {}) {
-        this.t.indexes.push({ names, options });
-    }
-
-    singleTableInheritance() {
-        this.t.singleTableInheritance = true;
-    }
-
     data(name: string, value: any) {
         this.t.data[name] = value;
-    }
-
-    /**
-     * Exclude this entity from database migrations.
-     */
-    excludeMigration() {
-        this.t.data['excludeMigration'] = true;
     }
 }
 

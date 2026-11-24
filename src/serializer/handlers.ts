@@ -57,10 +57,7 @@ import {
     excludedAnnotation,
     groupAnnotation,
     isBackReferenceType,
-    isMongoIdType,
-    isNanoIdType,
     isReferenceType,
-    isUUIDType,
     referenceAnnotation,
 } from '../type-annotations.js';
 import { ValidationErrorItem, ValidatorError } from '../validator.js';
@@ -1481,87 +1478,6 @@ export const guardFunctionFast: JsonTypeHandler = (type, input, b, state) => {
         b.lit(ReflectionKind),
     );
 };
-
-// ============================================================================
-// ID Pattern Handlers (NanoId, UUID, MongoId)
-// ============================================================================
-
-interface IdPatternConfig {
-    pattern?: RegExp;
-    length?: number;
-    allowEmpty?: boolean;
-    errorMessage: string;
-}
-
-function createIdPatternHandlers(config: IdPatternConfig): {
-    guardScore: JsonTypeHandler;
-    guardFast: JsonTypeHandler;
-    deserialize: JsonTypeHandler;
-} {
-    const buildCheck = (b: Builder, input: Ref): Ref<boolean> => {
-        let valid = b.isType(input, 'string');
-
-        if (config.length !== undefined) {
-            valid = b.and(valid, b.eq(input.get('length'), b.lit(config.length)));
-        }
-
-        if (config.pattern) {
-            const matchesPattern = b.call(
-                (pattern: RegExp, value: string) => pattern.test(value),
-                b.lit(config.pattern),
-                input,
-            );
-            if (config.allowEmpty) {
-                const isEmpty = b.eq(input, b.lit(''));
-                valid = b.and(valid, b.or(isEmpty, matchesPattern));
-            } else {
-                valid = b.and(valid, matchesPattern);
-            }
-        }
-
-        return valid;
-    };
-
-    return {
-        guardScore: (type, input, b, state) =>
-            guardWithError(b, state, input, buildCheck(b, input), 'type', config.errorMessage),
-        guardFast: (type, input, b, state) => buildCheck(b, input),
-        deserialize: (type, input, b, state) => {
-            b.if_(b.not(buildCheck(b, input)), () => {
-                state.throw_(type, input, config.errorMessage);
-            });
-            return input;
-        },
-    };
-}
-
-const nanoIdHandlers = createIdPatternHandlers({
-    length: 21,
-    errorMessage: 'Not a valid NanoId',
-});
-
-const uuidHandlers = createIdPatternHandlers({
-    pattern: /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
-    errorMessage: 'Not a valid UUID',
-});
-
-const mongoIdHandlers = createIdPatternHandlers({
-    pattern: /^[0-9a-fA-F]{24}$/,
-    allowEmpty: true,
-    errorMessage: 'Not a MongoId (ObjectId)',
-});
-
-export const guardNanoId = nanoIdHandlers.guardScore;
-export const guardNanoIdFast = nanoIdHandlers.guardFast;
-export const deserializeNanoId = nanoIdHandlers.deserialize;
-
-export const guardUUID = uuidHandlers.guardScore;
-export const guardUUIDFast = uuidHandlers.guardFast;
-export const deserializeUUID = uuidHandlers.deserialize;
-
-export const guardMongoId = mongoIdHandlers.guardScore;
-export const guardMongoIdFast = mongoIdHandlers.guardFast;
-export const deserializeMongoId = mongoIdHandlers.deserialize;
 
 // ============================================================================
 // Object Guards Helper Functions
@@ -3469,10 +3385,10 @@ export const deserializeClass: JsonTypeHandler = (type, input, b, state) => {
 export const serializeReference: JsonTypeHandler = (type, input, b, state) => {
     const classType = type as TypeClass;
     const clazz = ReflectionClass.from(classType.classType);
-    const pkProperty = clazz.getPrimary();
+    const pkProperty = clazz.getIdentifier();
 
     if (!pkProperty) {
-        // No primary key - fall back to full serialization
+        // No identifier - fall back to full serialization
         return handleObjectLiteral(type, input, b, state);
     }
 
@@ -3485,12 +3401,12 @@ export const serializeReference: JsonTypeHandler = (type, input, b, state) => {
     b.if_(
         b.call(isReferenceInstance, input),
         () => {
-            // It's a reference - get the primary key value
+            // It's a reference - get the identifier value
             const pkValue = input.get(pkName);
             b.setVar(result, state.build(pkType, pkValue));
         },
         () => {
-            // Full object - serialize the primary key
+            // Full object - serialize the identifier
             const pkValue = input.get(pkName);
             b.setVar(result, state.build(pkType, pkValue));
         },
@@ -3505,10 +3421,10 @@ export const serializeReference: JsonTypeHandler = (type, input, b, state) => {
 export const deserializeReference: JsonTypeHandler = (type, input, b, state) => {
     const classType = type as TypeClass;
     const clazz = ReflectionClass.from(classType.classType);
-    const pkProperty = clazz.getPrimary();
+    const pkProperty = clazz.getIdentifier();
 
     if (!pkProperty) {
-        // No primary key - fall back to full deserialization
+        // No identifier - fall back to full deserialization
         return deserializeClass(type, input, b, state);
     }
 
@@ -3516,13 +3432,13 @@ export const deserializeReference: JsonTypeHandler = (type, input, b, state) => 
     const pkType = pkProperty.type;
     const result = b.var_<any>(undefined);
 
-    // Runtime function to check if an object has only the primary key property
+    // Runtime function to check if an object has only the identifier property
     const isPkOnlyObject = (obj: any, pkPropertyName: string): boolean => {
         const keys = Object.keys(obj);
         return keys.length === 1 && keys[0] === pkPropertyName;
     };
 
-    // Runtime function to create a reference from a primary key value
+    // Runtime function to create a reference from a identifier value
     const createReferenceFromPk = (
         pkValue: any,
         classRef: any,
@@ -3537,7 +3453,7 @@ export const deserializeReference: JsonTypeHandler = (type, input, b, state) => 
     b.if_(
         isObj,
         () => {
-            // Check if the object has only the primary key (reference shorthand like { id: 34 })
+            // Check if the object has only the identifier (reference shorthand like { id: 34 })
             const isPkOnly = b.call(isPkOnlyObject, input, b.lit(pkName));
             b.if_(
                 isPkOnly,
@@ -3622,10 +3538,10 @@ export const deserializeInlineReference: JsonTypeHandler = (type, input, b, stat
 export const guardReferenceScore: JsonTypeHandler = (type, input, b, state) => {
     const classType = type as TypeClass;
     const clazz = ReflectionClass.from(classType.classType);
-    const pkProperty = clazz.getPrimary();
+    const pkProperty = clazz.getIdentifier();
 
     if (!pkProperty) {
-        // No primary key - use object guard
+        // No identifier - use object guard
         return guardObjectScore(type, input, b, state);
     }
 
@@ -3633,8 +3549,8 @@ export const guardReferenceScore: JsonTypeHandler = (type, input, b, state) => {
     const pkName = String(pkProperty.getName());
 
     // Accept either:
-    // 1. Primary key value directly
-    // 2. Object with primary key property
+    // 1. Identifier value directly
+    // 2. Object with identifier property
     const score = b.var_(b.lit(0));
 
     b.if_(
@@ -3662,11 +3578,11 @@ export const guardReferenceFast: JsonTypeHandler = (type, input, b, state) => {
     const classType = type as TypeClass;
     const clazz = ReflectionClass.from(classType.classType);
 
-    if (!clazz.hasPrimary()) {
+    if (!clazz.hasIdentifier()) {
         return guardObjectFast(type, input, b, state);
     }
 
-    const pkProperty = clazz.getPrimary();
+    const pkProperty = clazz.getIdentifier();
 
     const pkType = pkProperty.type;
     const pkName = String(pkProperty.getName());
@@ -4166,11 +4082,6 @@ export function registerDefaultHandlers(serializer: Serializer): void {
     // Binary BigInt types
     serializeRegistry.addDecorator(type => getBinaryBigIntMode(type) !== undefined, serializeBinaryBigInt);
     deserializeRegistry.addDecorator(type => getBinaryBigIntMode(type) !== undefined, deserializeBinaryBigInt);
-
-    // Special string types
-    deserializeRegistry.addDecorator(isNanoIdType, deserializeNanoId);
-    deserializeRegistry.addDecorator(isUUIDType, deserializeUUID);
-    deserializeRegistry.addDecorator(isMongoIdType, deserializeMongoId);
 }
 
 /**
@@ -4213,9 +4124,6 @@ export function registerTypeGuards(serializer: Serializer): void {
     // Decorators
     reg.addDecorator(isReferenceType, guardReferenceFast);
     reg.addDecorator(isBrandedNumber, guardNumberBrandedFast);
-    reg.addDecorator(isNanoIdType, guardNanoIdFast);
-    reg.addDecorator(isUUIDType, guardUUIDFast);
-    reg.addDecorator(isMongoIdType, guardMongoIdFast);
 
     // Post-hook for error collection
     reg.addPostHook((type, input, b, state, next) => {
@@ -4260,35 +4168,6 @@ export function registerTypeGuards(serializer: Serializer): void {
         b.if_(b.and(errorsRef, b.not(result)), () => {
             const errorCountAfter = errorsRef.get('length' as any);
             b.if_(b.eq(b.getVar(errorCountBefore), errorCountAfter), () => {
-                // Generate appropriate error message
-                if (isNanoIdType(type)) {
-                    b.push(
-                        errorsRef,
-                        b.new_(ValidationErrorItem, state.pathRef(), b.lit('type'), b.lit('Not a valid NanoId'), input),
-                    );
-                    return;
-                }
-                if (isUUIDType(type)) {
-                    b.push(
-                        errorsRef,
-                        b.new_(ValidationErrorItem, state.pathRef(), b.lit('type'), b.lit('Not a valid UUID'), input),
-                    );
-                    return;
-                }
-                if (isMongoIdType(type)) {
-                    b.push(
-                        errorsRef,
-                        b.new_(
-                            ValidationErrorItem,
-                            state.pathRef(),
-                            b.lit('type'),
-                            b.lit('Not a valid MongoId'),
-                            input,
-                        ),
-                    );
-                    return;
-                }
-
                 const expectedType = stringifyType(type).replace(/\n/g, '').replace(/\s+/g, ' ').trim();
                 const isDateType = type.kind === ReflectionKind.class && (type as TypeClass).classType === Date;
                 const useSimpleMessage =

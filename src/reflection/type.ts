@@ -17,25 +17,19 @@ import {
     AnnotationType,
     Annotations,
     BinaryBigIntType,
-    autoIncrementAnnotation,
     backReferenceAnnotation,
     binaryBigIntAnnotation,
     dataAnnotation,
-    databaseAnnotation,
     defaultAnnotation,
     embeddedAnnotation,
     entityAnnotation,
     excludedAnnotation,
     groupAnnotation,
-    indexAnnotation,
     inlineAnnotation,
     mapNameAnnotation,
-    mongoIdAnnotation,
-    nanoidAnnotation,
-    primaryKeyAnnotation,
+    identifierAnnotation,
     referenceAnnotation,
     typeAnnotation,
-    uuidAnnotation,
     validationAnnotation,
 } from '../type-annotations.js';
 import { getProperty, ReceiveType, reflect, ReflectionClass, resolveReceiveType, toSignature } from './reflection.js';
@@ -168,7 +162,7 @@ export function applyScheduledAnnotations(type: Type) {
 
         for (const scheduledDecorator of type.scheduleDecorators) {
             for (const decorator of typeDecorators) {
-                decorator(type.annotations, scheduledDecorator);
+                if (decorator(type.annotations, scheduledDecorator)) break;
             }
         }
         type.scheduleDecorators = undefined;
@@ -1507,8 +1501,15 @@ export function getValueType(type: Type): Type {
     return { kind: ReflectionKind.any };
 }
 
+/**
+ * Registers a custom type decorator. Custom decorators run before the
+ * built-in one, in reverse registration order, so that they can claim their
+ * own `TypeAnnotation<>` names (which the built-in decorator would otherwise
+ * store as generic `typeAnnotation` entries). A decorator returns `true` when
+ * it handled the given decorator type, which stops further processing.
+ */
 export function registerTypeDecorator(decorator: TypeDecorator) {
-    typeDecorators.push(decorator);
+    typeDecorators.unshift(decorator);
 }
 
 /**
@@ -1586,26 +1587,14 @@ export const typeDecorators: TypeDecorator[] = [
                 }
                 return true;
             }
-            case 'autoIncrement':
-                autoIncrementAnnotation.register(annotations, true);
-                return true;
             case 'binaryBigInt':
                 binaryBigIntAnnotation.replace(annotations, [BinaryBigIntType.unsigned]);
                 return true;
             case 'signedBinaryBigInt':
                 binaryBigIntAnnotation.replace(annotations, [BinaryBigIntType.signed]);
                 return true;
-            case 'primaryKey':
-                primaryKeyAnnotation.register(annotations, true);
-                return true;
-            case 'mongoId':
-                mongoIdAnnotation.register(annotations, true);
-                return true;
-            case 'UUIDv4':
-                uuidAnnotation.register(annotations, true);
-                return true;
-            case 'nanoid':
-                nanoidAnnotation.register(annotations, true);
+            case 'identifier':
+                identifierAnnotation.register(annotations, true);
                 return true;
             case 'embedded': {
                 const optionsType = meta.options;
@@ -1620,18 +1609,6 @@ export const typeDecorators: TypeDecorator[] = [
                 groupAnnotation.register(annotations, nameType.literal);
                 return true;
             }
-            case 'index': {
-                const optionsType = meta.options;
-                if (!optionsType || optionsType.kind !== ReflectionKind.objectLiteral) return false;
-                const options = typeToObject(optionsType);
-                indexAnnotation.replace(annotations, [options]);
-                return true;
-            }
-            case 'database': {
-                const [name, options] = typeToObject(meta.options);
-                databaseAnnotation.register(annotations, { name: name, options });
-                return true;
-            }
             case 'excluded': {
                 const name = typeToObject(meta.options);
                 excludedAnnotation.register(annotations, name);
@@ -1641,21 +1618,24 @@ export const typeDecorators: TypeDecorator[] = [
                 const name = typeToObject(meta.options);
                 if ('string' !== typeof name) return false;
                 const map: { [name: string]: AnnotationDefinition<any> } = {
-                    primaryKey: primaryKeyAnnotation,
-                    autoIncrement: autoIncrementAnnotation,
+                    identifier: identifierAnnotation,
                     excluded: excludedAnnotation,
-                    database: databaseAnnotation,
-                    index: indexAnnotation,
                     data: dataAnnotation,
                     group: groupAnnotation,
-                    embedded: excludedAnnotation,
+                    embedded: embeddedAnnotation,
                     mapName: mapNameAnnotation,
                     reference: referenceAnnotation,
                     backReference: backReferenceAnnotation,
                     validator: validationAnnotation,
                 };
-                const annotation = map[name] || typeAnnotation;
-                annotation.reset(annotations);
+                const annotation = map[name];
+                if (annotation) {
+                    annotation.reset(annotations);
+                } else {
+                    // Generic TypeAnnotation<>: only remove the named one.
+                    const entries: AnnotationType<typeof typeAnnotation>[] | undefined = annotations[typeAnnotation.symbol];
+                    if (entries) typeAnnotation.replace(annotations, entries.filter(v => v.name !== name));
+                }
                 return true;
             }
             case 'data': {

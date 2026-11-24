@@ -1,5 +1,3 @@
-import { uuid } from '../../src/utils.js';
-
 type MongoId = string & {__mongoId?: true};
 type Primary = {__primary?: true};
 
@@ -29,7 +27,7 @@ export class Document {
 }
 
 export class Page {
-    id: string = uuid();
+    id: string = crypto.randomUUID();
 
     children: Collection<Page> = new Collection;
 

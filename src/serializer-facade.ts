@@ -158,7 +158,7 @@ export function getPatchSerializeFunction(
 
         const result = partialSerializer(data, state);
         // disabled for the moment: we don't want to validate the patch structure yet since for database stuff it converts the structure to invalid TS representations
-        // e.g. reference objects -> primary keys
+        // e.g. reference objects -> identifiers
         // const errors: ValidationErrorItem[] = [];
         // partialValidator(result, { errors });
         // if (errors.length) throw ValidationError.from(errors);

@@ -26,7 +26,6 @@ export * from './src/serializer/handlers.js';
 export * from './src/serializer/serializer.js';
 export * from './src/serializer-facade.js';
 export * from './src/typeguard.js';
-export * from './src/types.js';
 export * from './src/utils.js';
 export * from './src/validator.js';
 export * from './src/validators.js';

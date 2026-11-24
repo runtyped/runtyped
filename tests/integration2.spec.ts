@@ -16,29 +16,23 @@ import { propertiesOf, reflect, ReflectionClass, ReflectionFunction, ReflectionM
 import { annotateClass } from '../src/decorator.js';
 import {
     assertType,
-    AutoIncrement,
-    autoIncrementAnnotation,
     BackReference,
     Data,
-    databaseAnnotation,
+    dataAnnotation,
     defaultAnnotation,
     Embedded,
     Entity,
     entityAnnotation,
     Excluded,
     Group,
-    Index,
     integer,
     MapName,
-    MySQL,
-    Postgres,
-    PrimaryKey,
-    primaryKeyAnnotation,
+    Identifier,
+    identifierAnnotation,
     Reference,
     referenceAnnotation,
     ReflectionKind,
     ReflectionVisibility,
-    SQLite,
     stringifyResolvedType,
     Type,
     typeAnnotation,
@@ -49,14 +43,16 @@ import {
     TypeNumber,
     TypeObjectLiteral,
     TypeTuple,
-    Unique,
 } from '../src/reflection/type.js';
 import { TypeNumberBrand } from '../src/type-spec/index.js';
 import { validate, ValidatorError } from '../src/validator.js';
 import { expectEqualType } from './utils.js';
 import { MyAlias } from './types.js';
 import { resolveRuntimeType } from '../src/reflection/processor.js';
-import { uuid } from '../src/utils.js';
+
+function uuid(): string {
+    return crypto.randomUUID();
+}
 
 test('class', () => {
     class Entity {
@@ -1004,14 +1000,14 @@ test('interface extends basic', () => {
     }
 
     interface User extends Base {
-        id: number & PrimaryKey;
+        id: number & Identifier;
     }
 
     const reflection = ReflectionClass.from(typeOf<User>());
     console.log('reflection', reflection.type);
     expect(reflection.getProperty('base').getKind()).toBe(ReflectionKind.boolean);
     expect(reflection.getProperty('id').getKind()).toBe(ReflectionKind.number);
-    expect(reflection.getProperty('id').isPrimaryKey()).toBe(true);
+    expect(reflection.getProperty('id').isIdentifier()).toBe(true);
 });
 
 test('interface extends generic', () => {
@@ -1020,47 +1016,47 @@ test('interface extends generic', () => {
     }
 
     interface User extends Base<boolean> {
-        id: number & PrimaryKey;
+        id: number & Identifier;
     }
 
     const reflection = ReflectionClass.from(typeOf<User>());
     console.log('reflection', reflection.type);
     expect(reflection.getProperty('base').getKind()).toBe(ReflectionKind.boolean);
     expect(reflection.getProperty('id').getKind()).toBe(ReflectionKind.number);
-    expect(reflection.getProperty('id').isPrimaryKey()).toBe(true);
+    expect(reflection.getProperty('id').isIdentifier()).toBe(true);
 });
 
 test('interface entity', () => {
-    interface User extends Entity<{ name: 'user', collection: 'users' }> {
-        id: number & PrimaryKey;
+    interface User extends Entity<{ name: 'user', description: 'users' }> {
+        id: number & Identifier;
     }
 
     const reflection = ReflectionClass.from(typeOf<User>());
     const entityOptions = entityAnnotation.getFirst(reflection.type);
-    expect(entityOptions).toEqual({ name: 'user', collection: 'users' });
+    expect(entityOptions).toEqual({ name: 'user', description: 'users' });
     expect(reflection.name).toBe('user');
-    expect(reflection.collectionName).toBe('users');
+    expect(reflection.description).toBe('users');
 });
 
 test('primaryKey', () => {
-    type a = number & PrimaryKey;
+    type a = number & Identifier;
     console.log((typeOf<a>() as any).decorators[0].types);
 
     class User {
-        id: number & PrimaryKey = 0;
+        id: number & Identifier = 0;
     }
 
     const reflection = ReflectionClass.from(User);
     const property = reflection.getProperty('id')!;
     expect(property.getType().kind).toBe(ReflectionKind.number);
-    const annotations = primaryKeyAnnotation.getAnnotations(property.getType());
+    const annotations = identifierAnnotation.getAnnotations(property.getType());
     expect(annotations![0]).toEqual(true);
-    expect(property.isPrimaryKey()).toEqual(true);
+    expect(property.isIdentifier()).toEqual(true);
 });
 
 test('Reference', () => {
     interface User {
-        id: number & PrimaryKey;
+        id: number & Identifier;
 
         pages: Page[] & BackReference;
     }
@@ -1084,17 +1080,17 @@ test('Reference', () => {
 
 test('cache with annotations array', () => {
     type MyString = string;
-    type MyPrimaryKeys = MyString[] & PrimaryKey;
+    type MyPrimaryKeys = MyString[] & Identifier;
 
     const string = typeOf<MyString>();
     assertType(string, ReflectionKind.string);
-    expect(primaryKeyAnnotation.isPrimaryKey(string)).toEqual(false);
+    expect(identifierAnnotation.isIdentifier(string)).toEqual(false);
 
     const primaryKeys = typeOf<MyPrimaryKeys>();
     assertType(primaryKeys, ReflectionKind.array);
     assertType(primaryKeys.type, ReflectionKind.string);
-    expect(primaryKeyAnnotation.isPrimaryKey(primaryKeys)).toEqual(true);
-    expect(primaryKeyAnnotation.isPrimaryKey(primaryKeys.type)).toEqual(false);
+    expect(identifierAnnotation.isIdentifier(primaryKeys)).toEqual(true);
+    expect(identifierAnnotation.isIdentifier(primaryKeys.type)).toEqual(false);
 
     assertType(primaryKeys.type.parent!, ReflectionKind.array);
     expect(primaryKeys.type.parent!.type === primaryKeys.type).toBe(true);
@@ -1105,34 +1101,32 @@ test('cache with annotations array', () => {
 
 test('cache with annotations type alias', () => {
     type MyString = string;
-    type MyPrimaryKey = MyString & PrimaryKey;
+    type MyPrimaryKey = MyString & Identifier;
 
     const str = typeOf<MyString>();
     assertType(str, ReflectionKind.string);
-    expect(primaryKeyAnnotation.isPrimaryKey(str)).toEqual(false);
+    expect(identifierAnnotation.isIdentifier(str)).toEqual(false);
 
     const primaryKey = typeOf<MyPrimaryKey>();
     assertType(primaryKey, ReflectionKind.string);
-    expect(primaryKeyAnnotation.isPrimaryKey(primaryKey)).toEqual(true);
+    expect(identifierAnnotation.isIdentifier(primaryKey)).toEqual(true);
 
     const str2 = typeOf<MyString>();
     assertType(str2, ReflectionKind.string);
-    expect(primaryKeyAnnotation.isPrimaryKey(str2)).toEqual(false);
+    expect(identifierAnnotation.isIdentifier(str2)).toEqual(false);
 
     interface User {
-        id: MyPrimaryKey & AutoIncrement;
+        id: MyPrimaryKey;
         id2: MyPrimaryKey;
     }
 
     const user = typeOf<User>();
     assertType(user, ReflectionKind.objectLiteral);
     assertType(user.types[0], ReflectionKind.propertySignature);
-    expect(primaryKeyAnnotation.getAnnotations(user.types[0].type)).toEqual([true]);
-    expect(autoIncrementAnnotation.getAnnotations(user.types[0].type)).toEqual([true]);
+    expect(identifierAnnotation.getAnnotations(user.types[0].type)).toEqual([true]);
 
     assertType(user.types[1], ReflectionKind.propertySignature);
-    expect(primaryKeyAnnotation.getAnnotations(user.types[1].type)).toEqual([true]);
-    expect(autoIncrementAnnotation.getAnnotations(user.types[1].type)).toEqual([]);
+    expect(identifierAnnotation.getAnnotations(user.types[1].type)).toEqual([true]);
 });
 
 test('cache same type', () => {
@@ -1146,7 +1140,7 @@ test('cache same type', () => {
 });
 
 test('cache with annotations class', () => {
-    interface User extends Entity<{ name: 'user', collection: 'users' }> {
+    interface User extends Entity<{ name: 'user', description: 'users' }> {
         username: string;
     }
 
@@ -1166,32 +1160,30 @@ test('cache with annotations class', () => {
     expect(user).toBe(user2);
     assertType(user, ReflectionKind.objectLiteral);
     expect(referenceAnnotation.getAnnotations(user)).toEqual([]);
-    expect(entityAnnotation.getFirst(user)).toEqual({ name: 'user', collection: 'users' });
+    expect(entityAnnotation.getFirst(user)).toEqual({ name: 'user', description: 'users' });
 
     expect(referenceAnnotation.getAnnotations(page.types[0].type)).toEqual([{}]);
-    expect(entityAnnotation.getFirst(page.types[0].type)).toEqual({ name: 'user', collection: 'users' });
+    expect(entityAnnotation.getFirst(page.types[0].type)).toEqual({ name: 'user', description: 'users' });
 
     assertType(page.types[1], ReflectionKind.propertySignature);
     assertType(page.types[1].type, ReflectionKind.objectLiteral);
     expect(referenceAnnotation.getAnnotations(page.types[1].type)).toEqual([]);
-    expect(entityAnnotation.getFirst(page.types[1].type)).toEqual({ name: 'user', collection: 'users' });
+    expect(entityAnnotation.getFirst(page.types[1].type)).toEqual({ name: 'user', description: 'users' });
 });
 
 test('cache different types', () => {
     interface Post {
-        slug: string & SQLite<{ type: 'text' }>;
-        size: number & SQLite<{ type: 'integer(4)' }>;
+        slug: string & Data<'column', 'text'>;
+        size: number & Data<'column', 'integer(4)'>;
     }
 
     const post = typeOf<Post>();
     assertType(post, ReflectionKind.objectLiteral);
     assertType(post.types[0], ReflectionKind.propertySignature);
-    const slugDatabase = databaseAnnotation.getDatabase(post.types[0].type, 'sqlite');
-    expect(slugDatabase!.type).toBe('text');
+    expect(dataAnnotation.getFirst(post.types[0].type)).toEqual({ column: 'text' });
 
     assertType(post.types[1], ReflectionKind.propertySignature);
-    const sizeDatabase = databaseAnnotation.getDatabase(post.types[1].type, 'sqlite');
-    expect(sizeDatabase!.type).toBe('integer(4)');
+    expect(dataAnnotation.getFirst(post.types[1].type)).toEqual({ column: 'integer(4)' });
 });
 
 test('cache parent unset', () => {
@@ -1242,7 +1234,7 @@ test('cache parent unset circular', () => {
 });
 
 test('circular interface', () => {
-    interface User extends Entity<{ name: 'user', collection: 'users' }> {
+    interface User extends Entity<{ name: 'user', description: 'users' }> {
         pages: Page[] & BackReference;
         page: Page & BackReference;
     }
@@ -1257,7 +1249,7 @@ test('circular interface', () => {
     expect(user === user2).toBe(true);
     assertType(user, ReflectionKind.objectLiteral);
     expect(referenceAnnotation.getAnnotations(user)).toEqual([]);
-    expect(entityAnnotation.getFirst(user)).toEqual({ name: 'user', collection: 'users' });
+    expect(entityAnnotation.getFirst(user)).toEqual({ name: 'user', description: 'users' });
 
     const page = typeOf<Page>();
     assertType(page, ReflectionKind.objectLiteral);
@@ -1266,12 +1258,12 @@ test('circular interface', () => {
     assertType(page.types[0].type, ReflectionKind.objectLiteral);
 
     expect(referenceAnnotation.getAnnotations(page.types[0].type)).toEqual([{}]);
-    expect(entityAnnotation.getFirst(page.types[0].type)).toEqual({ name: 'user', collection: 'users' });
+    expect(entityAnnotation.getFirst(page.types[0].type)).toEqual({ name: 'user', description: 'users' });
 
     assertType(page.types[1], ReflectionKind.propertySignature);
     assertType(page.types[1].type, ReflectionKind.objectLiteral);
     expect(referenceAnnotation.getAnnotations(page.types[1].type)).toEqual([]);
-    expect(entityAnnotation.getFirst(page.types[1].type)).toEqual({ name: 'user', collection: 'users' });
+    expect(entityAnnotation.getFirst(page.types[1].type)).toEqual({ name: 'user', description: 'users' });
 });
 
 test('built in numeric type', () => {
@@ -1438,41 +1430,6 @@ test('reference decorator', () => {
     const reflection = ReflectionClass.from(User);
     expect(reflection.getProperty('group')!.getReference()).toEqual({});
     expect(reflection.getProperty('group2')!.getReference()).toEqual({ onDelete: 'SET NULL' });
-});
-
-test('index decorator', () => {
-    class User {
-        username: string & Index<{ name: 'username', unique: true }> = '';
-
-        email?: string & Unique;
-
-        config: number & Index = 2;
-    }
-
-    const reflection = ReflectionClass.from(User);
-    const username = reflection.getProperty('username');
-    expect(username!.getIndex()).toEqual({ name: 'username', unique: true });
-    expect(reflection.getProperty('email')!.getIndex()).toEqual({ unique: true });
-    expect(reflection.getProperty('config')!.getIndex()).toEqual({});
-});
-
-test('database decorator', () => {
-    class User {
-        username: string & MySQL<{ type: 'varchar(255)' }> = '';
-
-        email?: string & SQLite<{ type: 'varchar(128)' }>;
-
-        config: number & Postgres<{ type: 'smallint' }> = 5;
-
-        nope?: number;
-    }
-
-    const reflection = ReflectionClass.from(User);
-    const username = reflection.getProperty('username');
-    expect(username!.getDatabase('mysql')).toEqual({ type: 'varchar(255)' });
-    expect(reflection.getProperty('email')!.getDatabase('sqlite')).toEqual({ type: 'varchar(128)' });
-    expect(reflection.getProperty('config')!.getDatabase('postgres')).toEqual({ type: 'smallint' });
-    expect(reflection.getProperty('nope')!.getDatabase('postgres')).toEqual(undefined);
 });
 
 test('enum const', () => {
@@ -1923,57 +1880,18 @@ test('typeOf returns same instance, and new one for generics', () => {
 test('reference types decorators correct', () => {
     @entity.name('user')
     class User {
-        id!: number & PrimaryKey & AutoIncrement;
+        id!: number & Identifier;
     }
 
     @entity.name('post')
     class Post {
-        id!: number & PrimaryKey & AutoIncrement;
+        id!: number & Identifier;
         user?: User & Reference;
     }
 
     const user = ReflectionClass.from(User);
-    expect(user.getProperty('id').isPrimaryKey()).toBe(true);
-    expect(user.getProperty('id').isAutoIncrement()).toBe(true);
-    expect(user.getPrimary() === user.getProperty('id')).toBe(true);
-    expect(user.getAutoIncrement() === user.getProperty('id')).toBe(true);
-});
-
-test('singleTableInheritance', () => {
-    @entity.collection('persons')
-    abstract class Person {
-        id: number & PrimaryKey & AutoIncrement = 0;
-        firstName?: string;
-        lastName?: string;
-        abstract type: string;
-    }
-
-    @entity.singleTableInheritance()
-    class Employee extends Person {
-        email?: string;
-
-        type: 'employee' = 'employee';
-    }
-
-    @entity.singleTableInheritance()
-    class Freelancer extends Person {
-        @t budget: number = 10_000;
-
-        type: 'freelancer' = 'freelancer';
-    }
-
-    const person = ReflectionClass.from(Person);
-    const employee = ReflectionClass.from(Employee);
-    const freelancer = ReflectionClass.from(Freelancer);
-
-    expect(person.singleTableInheritance).toBe(false);
-    expect(person.collectionName).toBe('persons');
-    expect(employee.singleTableInheritance).toBe(true);
-    expect(employee.collectionName).toBe('persons'); //todo: this should be inherited?
-    expect(freelancer.singleTableInheritance).toBe(true);
-
-    const discriminant = person.getSingleTableInheritanceDiscriminantName();
-    expect(discriminant).toBe('type');
+    expect(user.getProperty('id').isIdentifier()).toBe(true);
+    expect(user.getIdentifier() === user.getProperty('id')).toBe(true);
 });
 
 test('Array<T>', () => {
@@ -1984,7 +1902,7 @@ test('Array<T>', () => {
 test('default function expression', () => {
     class post {
         uuid: string = uuid();
-        id: integer & AutoIncrement & PrimaryKey = 0;
+        id: integer & Identifier = 0;
         created: Date = new Date;
         type: string = 'asd';
     }
@@ -2002,7 +1920,7 @@ test('type annotation first position', () => {
     }
 
     class post {
-        id: PrimaryKey & number = 0;
+        id: Identifier & number = 0;
         author?: Reference & MapName<'_author'> & author;
     }
 
@@ -2010,9 +1928,9 @@ test('type annotation first position', () => {
 
     const reflection = ReflectionClass.from(post);
     expect(reflection.getProperty('id').type.kind).toBe(ReflectionKind.number);
-    expect(reflection.getProperty('id').isPrimaryKey()).toBe(true);
+    expect(reflection.getProperty('id').isIdentifier()).toBe(true);
     expect(reflection.getProperty('author').type.kind).toBe(ReflectionKind.class);
-    expect(reflection.getProperty('author').isPrimaryKey()).toBe(false);
+    expect(reflection.getProperty('author').isIdentifier()).toBe(false);
     expect(reflection.getProperty('author').isReference()).toBe(true);
 
 });

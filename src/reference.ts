@@ -87,7 +87,7 @@ export function createReferenceClass<T>(
     reflection.data.referenceClass = Reference;
 
     for (const property of reflection.getProperties()) {
-        if (property.isPrimaryKey()) continue;
+        if (property.isIdentifier()) continue;
 
         // we can not exclude default or optional properties, since we tell serializer/validator/change-detector with
         // returning `unpopulatedSymbol` that this property is not loaded. Returning the wrong default/undefined leads to wrong results.

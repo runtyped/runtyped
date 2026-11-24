@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import { expect } from './expect/index.js';
-import { getConverterForSnapshot, getPrimaryKeyExtractor, getPrimaryKeyHashGenerator } from '../src/snapshot.js';
-import { PrimaryKey, Reference } from '../src/reflection/type.js';
+import { getConverterForSnapshot, getIdentifierExtractor, getIdentifierHashGenerator } from '../src/snapshot.js';
+import { Identifier, Reference } from '../src/reflection/type.js';
 import { ReflectionClass } from '../src/reflection/reflection.js';
 
 class Image {
     title: string = '';
 
-    constructor(public id: number & PrimaryKey = 0) {
+    constructor(public id: number & Identifier = 0) {
     }
 }
 
@@ -16,7 +16,7 @@ class User {
 
     title: string = '';
 
-    constructor(public id: number & PrimaryKey = 0) {
+    constructor(public id: number & Identifier = 0) {
 
     }
 }
@@ -41,8 +41,8 @@ test('getJITConverterForSnapshot', () => {
 });
 
 
-test('getPrimaryKeyExtractor', () => {
-    const converter = getPrimaryKeyExtractor(ReflectionClass.from(User));
+test('getIdentifierExtractor', () => {
+    const converter = getIdentifierExtractor(ReflectionClass.from(User));
 
     {
         const converted = converter({ id: 22, title: 'Peter' });
@@ -57,10 +57,10 @@ test('getPrimaryKeyExtractor', () => {
     }
 });
 
-test('getPrimaryKeyHashGenerator', () => {
+test('getIdentifierHashGenerator', () => {
     const schema = ReflectionClass.from(User);
-    expect(schema.getPrimaries().length).toBe(1);
-    const converter = getPrimaryKeyHashGenerator(schema);
+    expect(schema.getIdentifiers().length).toBe(1);
+    const converter = getIdentifierHashGenerator(schema);
 
     {
         const converted = converter({ id: 22, title: 'Peter' });
@@ -80,18 +80,18 @@ test('bigint and binary', () => {
         stake: bigint = 0n;
 
         constructor(
-            public publicKey: Uint8Array & PrimaryKey,
+            public publicKey: Uint8Array & Identifier,
             public address: Uint8Array,
         ) {
         }
     }
 
     const schema = ReflectionClass.from(Node);
-    expect(schema.getPrimaries().length).toBe(1);
+    expect(schema.getIdentifiers().length).toBe(1);
 
     const snapshot = getConverterForSnapshot(schema);
-    const converter = getPrimaryKeyHashGenerator(schema);
-    const pkExtract = getPrimaryKeyExtractor(schema);
+    const converter = getIdentifierHashGenerator(schema);
+    const pkExtract = getIdentifierExtractor(schema);
 
     {
         const converted = converter({ publicKey: new Uint8Array([0, 1, 2, 3]) });
@@ -122,17 +122,17 @@ test('bigint and binary', () => {
 test('bigint primary key', () => {
     class Node {
         constructor(
-            public stake: bigint & PrimaryKey,
+            public stake: bigint & Identifier,
         ) {
         }
     }
 
     const schema = ReflectionClass.from(Node);
-    expect(schema.getPrimaries().length).toBe(1);
+    expect(schema.getIdentifiers().length).toBe(1);
 
     const snapshot = getConverterForSnapshot(schema);
-    const converter = getPrimaryKeyHashGenerator(schema);
-    const pkExtract = getPrimaryKeyExtractor(schema);
+    const converter = getIdentifierHashGenerator(schema);
+    const pkExtract = getIdentifierExtractor(schema);
 
     {
         const converted = converter({ stake: 12n });

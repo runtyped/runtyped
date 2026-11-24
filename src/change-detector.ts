@@ -125,7 +125,7 @@ function buildComparator(
             const classSchema = ReflectionClass.from(type);
 
             if (referenceAnnotation.getFirst(type) !== undefined) {
-                // Reference type - compare primary keys
+                // Reference type - compare identifiers
                 buildReferenceComparator(
                     b,
                     classSchema,
@@ -256,7 +256,7 @@ function buildArrayComparator(
 }
 
 /**
- * Build reference type comparison (compare primary keys).
+ * Build reference type comparison (compare identifiers).
  */
 function buildReferenceComparator(
     b: Builder,
@@ -285,20 +285,20 @@ function buildReferenceComparator(
                     onChanged();
                 },
                 () => {
-                    // Both exist - compare primary key fields
+                    // Both exist - compare identifier fields
                     const changed = b.var_<boolean>(false);
 
-                    for (const primaryField of classSchema.getPrimaries()) {
-                        const pkName = primaryField.getNameAsString();
+                    for (const idField of classSchema.getIdentifiers()) {
+                        const pkName = idField.getNameAsString();
                         const lastPk = b.get(last, pkName);
                         const currentPk = b.get(current, pkName);
 
                         b.if_(b.not(b.getVar(changed)), () => {
-                            // Compare primary key values
+                            // Compare identifier values
                             if (
-                                primaryField.type.kind === ReflectionKind.any ||
-                                primaryField.type.kind === ReflectionKind.never ||
-                                primaryField.type.kind === ReflectionKind.union
+                                idField.type.kind === ReflectionKind.any ||
+                                idField.type.kind === ReflectionKind.never ||
+                                idField.type.kind === ReflectionKind.union
                             ) {
                                 b.if_(b.not(b.call<boolean>(genericEqual, lastPk, currentPk)), () => {
                                     b.setVar(changed, b.lit(true));

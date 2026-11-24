@@ -21,7 +21,7 @@ import {
 import { ReflectionClass, ReflectionProperty } from './reflection/reflection.js';
 import { ReflectionKind, Type, binaryTypes } from './reflection/type.js';
 import { Serializer, serializer as defaultSerializer } from './serializer/serializer.js';
-import { PrimaryKeyFields } from './type-annotations.js';
+import { IdentifierFields } from './type-annotations.js';
 
 /**
  * Deep clone helper for snapshot values.
@@ -56,7 +56,7 @@ function cloneValueDeep(value: any): any {
 
 /**
  * Build a snapshot value converter for a single type.
- * Converts value to a snapshot-friendly format (JSON-like with references as primary keys).
+ * Converts value to a snapshot-friendly format (JSON-like with references as identifiers).
  */
 function buildSnapshotValue(b: Builder, input: Ref, type: Type, direction: 'serialize' | 'deserialize'): Ref {
     switch (type.kind) {
@@ -231,7 +231,7 @@ function buildSnapshotObject(
 
 /**
  * Creates a JIT converter for snapshot using fn().
- * Converts class instance to snapshot format where references are stored as their primary keys.
+ * Converts class instance to snapshot format where references are stored as their identifiers.
  */
 function createJITConverterForSnapshot(
     schema: ReflectionClass<any>,
@@ -276,9 +276,9 @@ function createJITConverterForSnapshot(
             const propType = property.type;
 
             if (property.isReference()) {
-                // Reference: store only primary keys
+                // Reference: store only identifiers
                 const refClass = property.getResolvedReflectionClass();
-                const primaries = refClass.getPrimaries();
+                const identifiers = refClass.getIdentifiers();
 
                 b.if_(
                     b.isNullish(propAccess),
@@ -286,9 +286,9 @@ function createJITConverterForSnapshot(
                         b.set(result, propName, b.lit(null));
                     },
                     () => {
-                        // Build object with primary keys only
+                        // Build object with identifiers only
                         const refResult = b.let(b.emptyObj());
-                        for (const pk of primaries) {
+                        for (const pk of identifiers) {
                             const pkName = pk.getNameAsString();
                             const pkAccess = propAccess.get(pkName);
                             const pkValue = buildSnapshotValue(b, pkAccess, pk.type, direction);
@@ -327,7 +327,7 @@ function createJITConverterForSnapshot(
 /**
  * Creates a new JIT compiled function to convert the class instance to a snapshot.
  * A snapshot is essentially the class instance as `plain` serialization while references are
- * stored only as their primary keys.
+ * stored only as their identifiers.
  *
  * Generated function is cached.
  */
@@ -352,52 +352,52 @@ export function createSnapshot<T>(reflectionClass: ReflectionClass<T>, item: T) 
 }
 
 /**
- * Extracts the primary key of a snapshot and converts to class type.
+ * Extracts the identifier of a snapshot and converts to class type.
  */
-export function getPrimaryKeyExtractor<T>(reflectionClass: ReflectionClass<T>): (value: any) => Partial<T> {
+export function getIdentifierExtractor<T>(reflectionClass: ReflectionClass<T>): (value: any) => Partial<T> {
     const jitContainer = reflectionClass.getJitContainer();
-    if (jitContainer.primaryKey) return jitContainer.primaryKey;
+    if (jitContainer.identifier) return jitContainer.identifier;
 
-    jitContainer.primaryKey = createJITConverterForSnapshot(
+    jitContainer.identifier = createJITConverterForSnapshot(
         reflectionClass,
-        reflectionClass.getPrimaries(),
+        reflectionClass.getIdentifiers(),
         'deserialize',
     );
     toFastProperties(jitContainer);
-    return jitContainer.primaryKey;
+    return jitContainer.identifier;
 }
 
 /**
- * Creates a primary key hash generator that takes an item from any format
+ * Creates a identifier hash generator that takes an item from any format
  * converts it to class format, then to plain, then uses the primitive values to create a string hash.
  *
  * This function is designed to work on the plain values (db records or json values)
  */
-export function getPrimaryKeyHashGenerator(
+export function getIdentifierHashGenerator(
     reflectionClass: ReflectionClass<any>,
     serializerToUse: Serializer = defaultSerializer,
 ): (value: any) => string {
     const jitContainer = reflectionClass.getJitContainer();
 
-    if (!jitContainer.pkHash) {
-        jitContainer.pkHash = {};
+    if (!jitContainer.idHash) {
+        jitContainer.idHash = {};
         toFastProperties(jitContainer);
     }
 
-    if (jitContainer.pkHash[serializerToUse.name]) return jitContainer.pkHash[serializerToUse.name];
+    if (jitContainer.idHash[serializerToUse.name]) return jitContainer.idHash[serializerToUse.name];
 
-    jitContainer.pkHash[serializerToUse.name] = createPrimaryKeyHashGenerator(reflectionClass, serializerToUse);
-    toFastProperties(jitContainer.pkHash);
-    return jitContainer.pkHash[serializerToUse.name];
+    jitContainer.idHash[serializerToUse.name] = createIdentifierHashGenerator(reflectionClass, serializerToUse);
+    toFastProperties(jitContainer.idHash);
+    return jitContainer.idHash[serializerToUse.name];
 }
 
-function simplePrimaryKeyHash(value: any): string {
+function simpleIdentifierHash(value: any): string {
     return '\0' + value;
 }
 
-export function getSimplePrimaryKeyHashGenerator(reflectionClass: ReflectionClass<any>) {
-    const primary = reflectionClass.getPrimary();
-    return (data: PrimaryKeyFields<any>) => simplePrimaryKeyHash(data[primary.name]);
+export function getSimpleIdentifierHashGenerator(reflectionClass: ReflectionClass<any>) {
+    const identifier = reflectionClass.getIdentifier();
+    return (data: IdentifierFields<any>) => simpleIdentifierHash(data[identifier.name]);
 }
 
 /**
@@ -442,14 +442,14 @@ function buildHashValue(b: Builder, input: Ref, type: Type): Ref<string> {
 }
 
 /**
- * Creates a primary key hash generator using fn().
+ * Creates a identifier hash generator using fn().
  */
-function createPrimaryKeyHashGenerator(
+function createIdentifierHashGenerator(
     reflectionClass: ReflectionClass<any>,
     serializerToUse: Serializer,
 ): (value: any, state?: any) => string {
     const hasCircular = reflectionClass.hasCircularReference();
-    const primaries = reflectionClass.getPrimaries();
+    const identifiers = reflectionClass.getIdentifiers();
 
     return fn(arg<any>(), arg<any>(), (b: Builder, input: Ref<any>, stateArg: Ref<any>) => {
         // Initialize state
@@ -476,16 +476,16 @@ function createPrimaryKeyHashGenerator(
             b.push(state.get('_stack'), input);
         }
 
-        // Process each primary key property
-        for (const property of primaries) {
+        // Process each identifier property
+        for (const property of identifiers) {
             const propName = property.getNameAsString();
             const propAccess = input.get(propName);
             const propType = property.type;
 
             if (property.isReference()) {
-                // Reference: get primary key from referenced object
+                // Reference: get identifier from referenced object
                 const refClass = property.getResolvedReflectionClass();
-                const refPrimaries = refClass.getPrimaries();
+                const refIdentifiers = refClass.getIdentifiers();
 
                 b.if_(
                     b.and(b.neq(propAccess, b.lit(undefined)), b.not(b.isNull(propAccess))),
@@ -493,14 +493,14 @@ function createPrimaryKeyHashGenerator(
                         b.if_(
                             b.call(isObject, propAccess),
                             () => {
-                                // It's an object - extract primary keys
-                                for (const pk of refPrimaries) {
+                                // It's an object - extract identifiers
+                                for (const pk of refIdentifiers) {
                                     if (pk.type.kind === ReflectionKind.class && (pk.type as any).types?.length) {
                                         b.throw_(
                                             b.new_(
                                                 Error,
                                                 b.lit(
-                                                    `Class as primary key (${refClass.getClassName()}.${pk.getNameAsString()}) is not supported`,
+                                                    `Class as identifier (${refClass.getClassName()}.${pk.getNameAsString()}) is not supported`,
                                                 ),
                                             ),
                                         );
@@ -522,8 +522,8 @@ function createPrimaryKeyHashGenerator(
                                 }
                             },
                             () => {
-                                // Might be a primary key directly
-                                const pkType = refClass.getPrimary().type;
+                                // Might be a identifier directly
+                                const pkType = refClass.getIdentifier().type;
                                 const hashVal = buildHashValue(b, propAccess, pkType);
                                 b.setVar(resultRef, b.concat(b.getVar(resultRef), b.lit('\0'), hashVal));
                             },
@@ -534,13 +534,13 @@ function createPrimaryKeyHashGenerator(
                     },
                 );
             } else {
-                // Regular primary key property
+                // Regular identifier property
                 if (propType.kind === ReflectionKind.class && (propType as any).types?.length) {
                     b.throw_(
                         b.new_(
                             Error,
                             b.lit(
-                                `Class as primary key (${reflectionClass.getClassName()}.${propName}) is not supported`,
+                                `Class as identifier (${reflectionClass.getClassName()}.${propName}) is not supported`,
                             ),
                         ),
                     );

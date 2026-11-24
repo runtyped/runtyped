@@ -2,6 +2,58 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+- BREAKING: removed the deepkit-specific ID types `UUID`, `MongoId` and
+  `NanoId`, together with their annotations (`uuidAnnotation`,
+  `mongoIdAnnotation`, `nanoidAnnotation`), type checks (`isUUIDType()`,
+  `isMongoIdType()`, `isNanoIdType()`) and serializer handlers
+  (`guardUUID*`, `deserializeUUID`, `guardMongoId*`, `deserializeMongoId`,
+  `guardNanoId*`, `deserializeNanoId`). Use `string`, optionally with a
+  `Pattern<>` validator, instead.
+- BREAKING: removed the `uuid()`, `writeUuid()` and `stringifyUuid()`
+  helpers. Use `crypto.randomUUID()` instead.
+- BREAKING: renamed `PrimaryKey` to `Identifier`, since outside of an ORM it
+  simply marks the property that uniquely identifies an object (and that a
+  `Reference` serializes to). The annotation name changes from `'primaryKey'`
+  to `'identifier'` (including in `ResetAnnotation<>`), and the related APIs
+  follow: `identifierAnnotation` (with `isIdentifier()`), `isIdentifierType()`,
+  `IdentifierFields<T>`, `IdentifierType<T>`,
+  `ReflectionProperty.isIdentifier()`, `ReflectionClass.getIdentifier()`,
+  `hasIdentifier()`, `getIdentifiers()` and `extractIdentifier()`, and
+  `getIdentifierExtractor()`, `getIdentifierHashGenerator()` and
+  `getSimpleIdentifierHashGenerator()` in the snapshot module.
+- BREAKING: removed the database-specific annotations inherited from
+  deepkit: `AutoIncrement`, `Index`, `Unique`, `IndexOptions`,
+  `DatabaseField`, `MySQL`, `Postgres`, `SQLite` and their options types,
+  `autoIncrementAnnotation`, `indexAnnotation`, `databaseAnnotation`,
+  `isAutoIncrementType()` and the `AutoId` type, along with
+  `ReflectionProperty.isAutoIncrement()`, `getIndex()`, `getDatabase()`,
+  `isDatabaseSkipped()` and `isDatabaseMigrationSkipped()`, and
+  `ReflectionClass.getAutoIncrement()`.
+- BREAKING: `Entity<>` and `@entity` keep only their general-purpose
+  options (`name`, `description`, `disableConstructor()`, `data()`). Removed
+  the `collection`, `database`, `indexes` and `singleTableInheritance`
+  options, the `@entity.collection()`, `.databaseSchema()`, `.index()`,
+  `.singleTableInheritance()` and `.excludeMigration()` decorators, and
+  `ReflectionClass.collectionName`, `databaseSchemaName`, `indexes`,
+  `singleTableInheritance`, `subClasses`, `getCollectionName()` and the
+  single-table-inheritance helpers.
+- Type decorators registered with `registerTypeDecorator()` now run before
+  the built-in one, so they can claim their own `TypeAnnotation<>` names.
+  Previously the built-in decorator stored every such annotation as a generic
+  `typeAnnotation` entry, and custom decorators never saw them.
+- Fixed `ResetAnnotation<'embedded'>` resetting `Excluded<>` instead of
+  `Embedded<>`.
+- Fixed `ResetAnnotation<'name'>` for custom `TypeAnnotation<>`s removing
+  every custom annotation from the type instead of only the named one.
+- Added runnable [examples](./examples/README.md), grouped by feature,
+  starting with custom type annotations.
+- `@runtyped/type` no longer has runtime dependencies: `uuid` is gone, and
+  `camelcase` (used for JSON Schema names) and `to-fast-properties` are
+  replaced by internal ports. JSON Schema names are now built without regard
+  to the host's locale.
+
 ## **`3.0.1`**
 
 - Fixed the typings requiring `@types/node`: `nodeBufferToTypedArray()` and
