@@ -28,6 +28,7 @@
     "test": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test 'dist/tests/**/*.spec.js' 'dist/examples/**/*.js'",
     "test:coverage": "node --enable-source-maps --expose-gc --max-old-space-size=3048 --test --experimental-test-coverage 'dist/tests/**/*.spec.js' 'dist/examples/**/*.js'",
     "bench": "node --expose-gc dist/bench/index.js",
+    "bench:ajv": "node --expose-gc dist/bench/ajv.js",
     "examples": "node --test 'dist/examples/**/*.js'",
     "clean:all": "npm run clean:dist && npm run clean:modules && npm run clean:lock",
     "clean:modules": "rm -rf node_modules",
@@ -38,6 +39,7 @@
     "@runtyped/typescript": "3.0.1",
     "@types/chai": "^5.2.3",
     "@types/node": "^25.8.0",
+    "ajv": "^8.20.0",
     "chai": "^6.2.2",
     "mitata": "^1.0.34"
   },
