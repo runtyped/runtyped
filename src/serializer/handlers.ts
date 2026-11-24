@@ -4157,17 +4157,24 @@ export function registerTypeGuards(serializer: Serializer): void {
             }
         }
 
-        // Track error count before running the handler
         const errorsRef = state.optionsRef.get('errors' as any);
-        const errorCountBefore = b.var_(b.ternary(errorsRef, errorsRef.get('length' as any), b.lit(0)));
 
-        // Run the handler
-        const result = next() as Ref<boolean>;
+        // Run the handler. Handlers can only add errors of their own through
+        // statements, so when it emits none (plain checks such as
+        // `typeof v === "string"`), there is no need to track the error count.
+        const { result: check, statements } = b.capture(() => next() as Ref<boolean>);
+        const errorCountBefore =
+            statements.length > 0 ? b.var_(b.ternary(errorsRef, errorsRef.get('length' as any), b.lit(0))) : undefined;
+        b.emit(statements);
 
-        // Add error if validation failed and no errors were added by child handlers
-        b.if_(b.and(errorsRef, b.not(result)), () => {
-            const errorCountAfter = errorsRef.get('length' as any);
-            b.if_(b.eq(b.getVar(errorCountBefore), errorCountAfter), () => {
+        // Evaluate the check once: callers use the result again to compute
+        // their own, and the check can be arbitrarily large.
+        const result = b.var_(check);
+
+        // Add error if validation failed and no errors were added by child handlers.
+        // The result is tested first, so valid values only pay for one branch.
+        b.if_(b.and(b.not(b.getVar(result)), errorsRef), () => {
+            const pushTypeError = () => {
                 const expectedType = stringifyType(type).replace(/\n/g, '').replace(/\s+/g, ' ').trim();
                 const isDateType = type.kind === ReflectionKind.class && (type as TypeClass).classType === Date;
                 const useSimpleMessage =
@@ -4246,9 +4253,14 @@ export function registerTypeGuards(serializer: Serializer): void {
                         },
                     );
                 }
-            });
+            };
+            if (errorCountBefore) {
+                b.if_(b.eq(b.getVar(errorCountBefore), errorsRef.get('length' as any)), pushTypeError);
+            } else {
+                pushTypeError();
+            }
         });
 
-        return result;
+        return b.getVar(result);
     });
 }

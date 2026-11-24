@@ -28,6 +28,17 @@ All notable changes to this project will be documented in this file.
   `is<{ id: number }>(data)` no longer re-run the type VM (and rebuild their
   JIT code) on every call: ~5.6 µs → ~35 ns per call. The reflection format is
   unchanged, so any 3.x runtime works with either compiler.
+- `is<T>()` and `validate<T>()` cache the guard or validator they build on a
+  type argument hoisted by [@runtyped/typescript] 3.1.0, skipping type
+  resolution on every later call (`is<T>()`: ~17 ns → ~10 ns,
+  `validate<T>()`: ~41 ns → ~16 ns on a simple type). `validate<T>()` no
+  longer goes through the deprecated `is(data, serializer, errors, type)`
+  overload. Types passed explicitly (`Type` objects, classes, forwarded
+  `ReceiveType<T>` arguments) behave as before.
+- Validators that collect errors (`validate<T>()`, `validateFunction<T>()`,
+  `getValidatorFunction<T>()`, …) evaluate each check once and only track the
+  number of errors where a check can add errors of its own (~2x faster on
+  valid data: `validateFunction<T>()` ~22 ns → ~10 ns on a simple type).
 
 ## **`3.0.2`**
 

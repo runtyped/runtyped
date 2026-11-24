@@ -48,6 +48,12 @@ export function is<T>(
     errors?: ValidationErrorItem[],
     receiveType?: ReceiveType<T>,
 ): data is T {
+    // Fast path: the guard cached on a (hoisted) type argument by an earlier call.
+    if (errors === undefined && Array.isArray(serializerOrType)) {
+        const cached = (serializerOrType as any).__isFast;
+        if (cached !== undefined) return cached(data);
+    }
+
     // Detect which overload is being used
     // Note: We only check serializerOrType instanceof Serializer and errors !== undefined
     // because the type compiler injects types into ALL ReceiveType<T> parameters,
@@ -68,6 +74,9 @@ export function is<T>(
     // New API: is(data, type) - type guard with loose mode (allows extra keys)
     const type = serializerOrType as ReceiveType<T> | undefined;
     if (!type) throw new NoTypeReceived('is() called without type parameter');
+    // A type argument that was resolved before is one the compiler hoisted, so
+    // it is worth caching the guard on. Fresh arrays are not written to.
+    const reused = Array.isArray(type) && (type as any).__type !== undefined;
     const resolved = resolveReceiveType(type);
     const jit = getTypeJitContainer(resolved);
     if (!jit.__isFast) {
@@ -75,6 +84,7 @@ export function is<T>(
         // and skips the bookkeeping needed to collect errors.
         jit.__isFast = serializer.buildFastTypeGuard(resolved);
     }
+    if (reused) (type as any).__isFast = jit.__isFast;
     return jit.__isFast(data);
 }
 

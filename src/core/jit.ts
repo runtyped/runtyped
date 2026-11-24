@@ -1252,6 +1252,29 @@ export class Builder {
         return saved;
     }
 
+    /**
+     * Runs `fn` while collecting the statements it emits instead of emitting
+     * them. Pass the statements to `emit()` to place them, e.g. after code
+     * that only needs to exist when `fn` emitted any statements at all.
+     */
+    capture<T>(fn: () => T): { result: T; statements: readonly unknown[] } {
+        this.saveStmts();
+        let result: T;
+        try {
+            result = fn();
+        } catch (error) {
+            // Restore the enclosing block so the builder stays usable.
+            this.restoreStmts();
+            throw error;
+        }
+        return { result, statements: this.restoreStmts() };
+    }
+
+    /** Emits statements collected by `capture()`. */
+    emit(statements: readonly unknown[]): void {
+        for (const stmt of statements as Stmt[]) this.pushStmt(stmt);
+    }
+
     // ========== Input Access ==========
 
     /** Get input argument by index */

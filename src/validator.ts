@@ -1,10 +1,11 @@
 import { RuntypedError, stringifyValueWithType } from './core/index.js';
 
 import { entity } from './decorator.js';
-import { ReceiveType } from './reflection/reflection.js';
-import { Type, stringifyType } from './reflection/type.js';
+import { ReceiveType, resolveReceiveType } from './reflection/reflection.js';
+import { Type, getTypeJitContainer, stringifyType } from './reflection/type.js';
 import { Serializer, serializer } from './serializer/serializer.js';
-import { getValidatorFunction, is } from './typeguard.js';
+import { getValidatorFunction } from './typeguard.js';
+import { NoTypeReceived } from './utils.js';
 
 /**
  * Used in validator functions.
@@ -90,7 +91,27 @@ export class ValidationError extends RuntypedError {
  */
 export function validate<T>(data: any, type?: ReceiveType<T>): ValidationErrorItem[] {
     const errors: ValidationErrorItem[] = [];
-    is(data, undefined, errors, type);
+
+    // Fast path: the validator cached on a (hoisted) type argument by an earlier call.
+    if (Array.isArray(type)) {
+        const cached = (type as any).__validate;
+        if (cached !== undefined) {
+            cached(data, { errors });
+            return errors;
+        }
+    }
+
+    if (!type) throw new NoTypeReceived('validate() called without type parameter');
+    // A type argument that was resolved before is one the compiler hoisted, so
+    // it is worth caching the validator on. Fresh arrays are not written to.
+    const reused = Array.isArray(type) && (type as any).__type !== undefined;
+    const resolved = resolveReceiveType(type);
+    const jit = getTypeJitContainer(resolved);
+    if (!jit.__is) {
+        jit.__is = serializer.buildTypeGuard(resolved, false);
+    }
+    if (reused) (type as any).__validate = jit.__is;
+    jit.__is(data, { errors });
     return errors;
 }
 
