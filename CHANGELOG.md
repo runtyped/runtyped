@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## **`3.0.2`**
+
+Although technically breaking with respect to DeepKit, these changes do
+not break Runtyped's public API surface and simply discard types and type
+annotations specific to DeepKit's ORM. Runtyped remains framework-agnostic.
+
 - BREAKING: removed the deepkit-specific ID types `UUID`, `MongoId` and
   `NanoId`, together with their annotations (`uuidAnnotation`,
   `mongoIdAnnotation`, `nanoidAnnotation`), type checks (`isUUIDType()`,
