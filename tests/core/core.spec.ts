@@ -79,6 +79,15 @@ test('helper isFunction', () => {
     };
     fn.toString = () => 'class{}';
     expect(isFunction(fn)).toBe(false);
+
+    // Functions without an own prototype are never classes.
+    expect(isFunction({ method() {} }.method)).toBe(true);
+    expect(isFunction(async function* () {})).toBe(true);
+    // Results are cached per function; repeated checks must stay consistent.
+    class Cached {}
+    expect(isFunction(Cached)).toBe(false);
+    expect(isFunction(Cached)).toBe(false);
+    expect(isClass(Cached)).toBe(true);
 });
 
 test('helper isClass', () => {

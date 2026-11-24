@@ -72,9 +72,10 @@ export const validationHook: TypeHook<JsonBuildContext> = (type, input, b, state
     const pathExpr = state.pathRef();
 
     // Check if we should add errors:
+    // - Don't add if the guard does not collect errors at all (typeGuard*() builders)
     // - Don't add if in union context (unless collectUnionMemberErrors is true)
     // This matches the behavior in handlers.ts post-hook
-    const shouldAddErrors = !state.inUnionContext || state.collectUnionMemberErrors;
+    const shouldAddErrors = state.collectErrors && (!state.inUnionContext || state.collectUnionMemberErrors);
 
     for (const validation of annotations) {
         const { name, args } = validation;

@@ -14,8 +14,8 @@ import { expect } from './expect/index.js';
 import { Serializer, registerDefaultHandlers, registerTypeGuards } from '../index.js';
 import { isReferenceInstance } from '../src/reference.js';
 import { cast } from '../src/serializer-facade.js';
-import { Identifier, Reference, float, float32, int8, integer } from '../src/type-annotations.js';
-import { is, isStrict, isWeak, typeGuardStrict, typeGuardWeak } from '../src/typeguard.js';
+import { Email, Identifier, MaxLength, MinLength, Positive, Reference, float, float32, int8, integer } from '../src/type-annotations.js';
+import { is, isStrict, isWeak, typeGuard, typeGuardStrict, typeGuardWeak } from '../src/typeguard.js';
 
 test('primitive string', () => {
     expect(is<string>('a')).toEqual(true);
@@ -700,4 +700,30 @@ test('isWeak nested objects', () => {
     expect(isWeak<Nested>({ inner: { count: 5 } })).toEqual(true);
     expect(isWeak<Nested>({ inner: { count: NaN } })).toEqual(true); // NaN passes
     expect(is<Nested>({ inner: { count: NaN } })).toEqual(false); // is() rejects
+});
+
+test('precompiled type guards honour validation annotations', () => {
+    // Regression: validator annotations used to make every typeGuard*()
+    // builder generate invalid JavaScript (`{}.errors.push(...)`).
+    interface Constrained {
+        name: string & MinLength<3> & MaxLength<10>;
+        count: number & Positive;
+        email: Email;
+    }
+
+    const valid = { name: 'Alice', count: 3, email: 'alice@example.com' };
+    const invalid: Record<string, unknown>[] = [
+        { ...valid, name: 'Al' },
+        { ...valid, name: 'Alice Alice Alice' },
+        { ...valid, count: -1 },
+        { ...valid, email: 'not-an-email' },
+    ];
+
+    for (const guard of [typeGuard<Constrained>(), typeGuardStrict<Constrained>(), typeGuardWeak<Constrained>()]) {
+        expect(guard(valid)).toEqual(true);
+        for (const value of invalid) {
+            expect(guard(value)).toEqual(false);
+            expect(is<Constrained>(value)).toEqual(false);
+        }
+    }
 });

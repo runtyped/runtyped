@@ -37,22 +37,36 @@ export function isClassInstance(target: any): boolean {
  * Returns true if given obj is a function.
  */
 export function isFunction(obj: any): obj is Function {
-    if ('function' === typeof obj) {
-        return !obj.toString().startsWith('class ') && !obj.toString().startsWith('class{');
-    }
-
-    return false;
+    return 'function' === typeof obj && !isClassFunction(obj);
 }
 
 /**
  * Returns true if given obj is a ES6 class (ES5 fake classes are not supported).
  */
 export function isClass(obj: any): obj is AbstractClassType {
-    if ('function' === typeof obj) {
-        return obj.toString().startsWith('class ') || obj.toString().startsWith('class{');
-    }
+    return 'function' === typeof obj && isClassFunction(obj);
+}
 
-    return false;
+const classFunctionCache = new WeakMap<Function, boolean>();
+
+/**
+ * Tells ES6 classes apart from other functions. These checks sit on hot paths
+ * (e.g. resolving the type of every `is<T>()` call), so the expensive source
+ * inspection is avoided whenever possible.
+ */
+function isClassFunction(fn: Function): boolean {
+    // Arrow functions, methods and async functions have no own `prototype`
+    // and can never be classes.
+    if (!Object.prototype.hasOwnProperty.call(fn, 'prototype')) return false;
+    let result = classFunctionCache.get(fn);
+    if (result === undefined) {
+        // Deliberately the function's own toString(), which can be overridden
+        // to make a function pass for a class.
+        const source = fn.toString();
+        result = source.startsWith('class ') || source.startsWith('class{');
+        classFunctionCache.set(fn, result);
+    }
+    return result;
 }
 
 declare var global: any;

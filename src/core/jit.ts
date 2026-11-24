@@ -689,6 +689,15 @@ class CodeGenerator {
         return name;
     }
 
+    /**
+     * Emits the target of a member access. Object literals are parenthesized,
+     * since `{}.key` at the start of a statement parses as a block.
+     */
+    private memberTargetToCode(expr: Expr): string {
+        const code = this.exprToCode(expr);
+        return expr.kind === 'obj' ? `(${code})` : code;
+    }
+
     private exprToCode(expr: Expr): string {
         switch (expr.kind) {
             case 'lit':
@@ -698,14 +707,14 @@ class CodeGenerator {
             case 'var':
                 return this.varName(expr.id);
             case 'get': {
-                const obj = this.exprToCode(expr.obj);
+                const obj = this.memberTargetToCode(expr.obj);
                 if (typeof expr.key === 'string') {
                     return isValidIdentifier(expr.key) ? `${obj}.${expr.key}` : `${obj}[${JSON.stringify(expr.key)}]`;
                 }
                 return `${obj}[${this.exprToCode(expr.key)}]`;
             }
             case 'at': {
-                const arr = this.exprToCode(expr.arr);
+                const arr = this.memberTargetToCode(expr.arr);
                 const idx = typeof expr.index === 'number' ? String(expr.index) : this.exprToCode(expr.index);
                 return `${arr}[${idx}]`;
             }

@@ -70,11 +70,12 @@ export function is<T>(
     if (!type) throw new NoTypeReceived('is() called without type parameter');
     const resolved = resolveReceiveType(type);
     const jit = getTypeJitContainer(resolved);
-    if (!jit.__isLoose) {
-        // Use buildTypeGuard with loose mode: validates constraints but allows extra keys
-        jit.__isLoose = serializer.buildTypeGuard(resolved, true);
+    if (!jit.__isFast) {
+        // Same guard as typeGuard<T>(): validates constraints, allows extra keys
+        // and skips the bookkeeping needed to collect errors.
+        jit.__isFast = serializer.buildFastTypeGuard(resolved);
     }
-    return jit.__isLoose(data, {});
+    return jit.__isFast(data);
 }
 
 /**

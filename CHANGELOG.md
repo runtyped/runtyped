@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Fixed `typeGuard<T>()`, `typeGuardStrict<T>()` and `typeGuardWeak<T>()`
+  throwing a `SyntaxError` when building a guard for any type carrying a
+  validation annotation (`MinLength<>`, `Positive`, `Email`, `Validate<>`, …).
+- Faster `is<T>()`, `validate<T>()` and every other API that receives a type
+  argument per call: `isFunction()` and `isClass()` no longer stringify the
+  function's source each time, which cut type resolution from ~70 ns to
+  ~18 ns per call.
+- `is<T>()` now uses the same guard as `typeGuard<T>()`, which skips the
+  bookkeeping needed to collect errors (~3x faster on simple types). Its
+  results are unchanged.
+- Added a validation benchmark against [Ajv](https://ajv.js.org)
+  (`npm run bench:ajv`).
+
 ## **`3.0.2`**
 
 Although technically breaking with respect to DeepKit, these changes do
