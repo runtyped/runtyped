@@ -129,3 +129,22 @@ test('ReceiveType forward to type passing', () => {
     const type2 = mySerialize2<string>();
     expect(type2).toMatchObject({ kind: ReflectionKind.array, type: { kind: ReflectionKind.string } });
 });
+
+test('resolveReceiveType caches type references on the received array', () => {
+    interface CachedUser {
+        id: number;
+    }
+
+    function receive<T>(type?: ReceiveType<T>) {
+        return type;
+    }
+
+    // Recent compilers hoist this array into a module-level variable, so the
+    // cache turns every later call into a single property lookup.
+    const packed = receive<CachedUser>() as any;
+    expect(packed.__type).toBe(undefined);
+    const type = resolveReceiveType(packed);
+    expect(type).toBe(typeOf<CachedUser>());
+    expect(packed.__type).toBe(type);
+    expect(resolveReceiveType(packed)).toBe(type);
+});

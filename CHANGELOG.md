@@ -16,6 +16,18 @@ All notable changes to this project will be documented in this file.
   results are unchanged.
 - Added a validation benchmark against [Ajv](https://ajv.js.org)
   (`npm run bench:ajv`).
+- `resolveReceiveType()` caches the type a simple type reference (such as the
+  argument passed by `is<User>()`) resolves to on the received array. With
+  [@runtyped/typescript] 3.1.0, which hoists those arrays into module-level
+  variables, every call after the first is a single lookup (`is<T>()`: ~30 ns
+  → ~17 ns per call).
+- [@runtyped/typescript] 3.1.0: call-site type arguments that only refer to
+  module-level or global types are hoisted into lazily initialized
+  module-level variables (`var __ΩΩ0;` … `is(data, __ΩΩ0 || (__ΩΩ0 = [...]))`)
+  instead of being emitted as a new array on every call. Inline types such as
+  `is<{ id: number }>(data)` no longer re-run the type VM (and rebuild their
+  JIT code) on every call: ~5.6 µs → ~35 ns per call. The reflection format is
+  unchanged, so any 3.x runtime works with either compiler.
 
 ## **`3.0.2`**
 

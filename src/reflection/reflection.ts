@@ -78,11 +78,15 @@ export function resolveReceiveType(type?: Packed | Type | Function | ClassType |
         if (type[type.length - 1] === 'n!' || type[type.length - 1] === 'P7!') {
             //n! represents a simple inline: [Op.inline, 0]
             //P7! represents a class reference: [Op.Frame, Op.classReference, 0] (Op.Frame seems unnecessary)
+            const packed = type;
             typeFn = (type as any)[0] as Function | any;
-            type = (isFunction(typeFn) ? typeFn() : typeFn) as Packed | Type | ClassType | AbstractClassType | ReflectionClass<any> | undefined;
-            if (!type) {
+            const target = (isFunction(typeFn) ? typeFn() : typeFn) as Packed | Type | ClassType | AbstractClassType | ReflectionClass<any> | undefined;
+            if (!target) {
                 throw new Error(`No type resolved for ${String(typeFn)}. Circular import or no runtime type available.`);
             }
+            // The compiler hoists static type arguments into module-level constants,
+            // so caching on the reference makes every later call a single lookup.
+            return packed.__type = resolveReceiveType(target);
         }
     }
 
