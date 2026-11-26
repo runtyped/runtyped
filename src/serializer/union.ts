@@ -695,6 +695,14 @@ function buildScoredUnion(type: TypeUnion, input: Ref, b: Builder, state: JsonBu
  * Main union handler that selects the appropriate strategy.
  */
 export const handleUnion: TypeHandler<TypeUnion, JsonBuildContext> = (type, input, b, state) => {
+    // A union with an any or unknown member is that member, as in TypeScript.
+    // Without this, scored resolution would force the input into another
+    // member and silently rewrite it.
+    const topMember = type.types.find(m => m.kind === ReflectionKind.any || m.kind === ReflectionKind.unknown);
+    if (topMember) {
+        return state.build(topMember, input);
+    }
+
     // === PHASE 1: Discriminator Detection (O(1)) ===
     const disc = detectDiscriminator(type);
     if (disc) {

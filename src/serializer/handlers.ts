@@ -4168,6 +4168,7 @@ export function registerTypeGuards(serializer: Serializer): void {
     reg.register(ReflectionKind.null, guardNullFast);
     reg.register(ReflectionKind.undefined, guardUndefinedFast);
     reg.register(ReflectionKind.any, guardAnyFast);
+    reg.register(ReflectionKind.unknown, guardAnyFast);
     reg.register(ReflectionKind.literal, guardLiteralFast);
 
     // Compound types

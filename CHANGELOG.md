@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Fixed `cast()`, `deserialize()` and `serialize()` rewriting their input into
+  another union member when the union has an `any` or `unknown` member. Such a
+  union now passes input through unchanged, as `any | X` is `any` in
+  TypeScript ([#11](https://github.com/runtyped/runtyped/issues/11)).
+- Fixed `is<unknown>(x)` returning `x` instead of `true`, which made unions
+  with an `unknown` member reject falsy values.
+- `@runtyped/typescript` 3.1.1 adds a `reflectTypeOnlyImports` tsconfig.json
+  option. With it, a type-only import (`import type { X }` or
+  `import { type X }`) of an interface or type alias is reflected like a plain
+  import, instead of as `any`, when the imported module defines `__ΩX`. The
+  module is then loaded at runtime. It is off by default, as type-only imports
+  never load their module upstream, and it doesn't apply to classes
+  ([#11](https://github.com/runtyped/runtyped/issues/11)).
+
+## **`3.1.0`**
+
 - Fixed `typeGuard<T>()`, `typeGuardStrict<T>()` and `typeGuardWeak<T>()`
   throwing a `SyntaxError` when building a guard for any type carrying a
   validation annotation (`MinLength<>`, `Positive`, `Email`, `Validate<>`, …).

@@ -85,6 +85,18 @@ const type = typeOf<User>();
 const schema = toJsonSchema<User>();
 ```
 
+### Type-only imports
+
+A type imported with `import type { User }` or `import { type User }` is
+reflected as `any` by default, because a type-only import never loads its
+module at run time. Validation then silently accepts any value in its place:
+`cast<User | Admin>()` with a type-only `User` accepts everything.
+
+Use a plain `import { User }` for types you validate, or set
+`"reflectTypeOnlyImports": true` in `tsconfig.json`. You'll need that option
+with `verbatimModuleSyntax`, which requires `import type` for types. See
+[@runtyped/typescript] for details.
+
 ## TypeScript 6.x and @runtyped/type-compiler
 
 > [!WARNING]
