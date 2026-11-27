@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## **`3.1.1`**
 
 - Fixed `cast()`, `deserialize()` and `serialize()` rewriting their input into
   another union member when the union has an `any` or `unknown` member. Such a
