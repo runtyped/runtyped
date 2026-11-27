@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+- Faster `cast()`, `castFunction()`, `validatedDeserialize()` and `assert()`:
+  `assert()`, which all of them run, no longer walks the whole type tree on
+  every call to check for validation annotations. The answer is now computed
+  once per type and cached with its JIT guards (`castFunction()`: ~1.9 µs →
+  ~30 ns, `cast()`: ~2.5 µs → ~85 ns per call). Their results are unchanged.
+
 ## **`3.1.1`**
 
 - Fixed `cast()`, `deserialize()` and `serialize()` rewriting their input into
