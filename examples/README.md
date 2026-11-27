@@ -36,4 +36,10 @@ All three also use `Identifier`, which marks the property that uniquely
 identifies an object, and `ReflectionClass` to inspect the annotated
 properties.
 
+## Validation
+
+| Example | Demonstrates |
+| --- | --- |
+| [01-validation-performance.ts](./validation/01-validation-performance.ts) | The different ways to validate data (`typeGuard<T>()`, `is<T>()`, `typeGuardStrict<T>()`, `typeGuardWeak<T>()`, `assert<T>()`, `validate<T>()`, `cast<T>()`, `castFunction<T>()` and a guard followed by `deserializeFunction<T>()`): what each one accepts and returns, and what it costs on valid and invalid input. Run it with `--bench` to measure them on your machine. |
+
 [@runtyped/type]: https://npm.im/@runtyped/type
