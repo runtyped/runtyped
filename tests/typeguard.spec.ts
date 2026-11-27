@@ -13,9 +13,11 @@ import { expect } from './expect/index.js';
 
 import { Serializer, registerDefaultHandlers, registerTypeGuards } from '../index.js';
 import { isReferenceInstance } from '../src/reference.js';
-import { cast } from '../src/serializer-facade.js';
+import { typeOf } from '../src/reflection/reflection.js';
+import { clearTypeJitContainer } from '../src/reflection/type.js';
+import { cast, castFunction } from '../src/serializer-facade.js';
 import { Email, Identifier, MaxLength, MinLength, Positive, Reference, float, float32, int8, integer } from '../src/type-annotations.js';
-import { is, isStrict, isWeak, typeGuard, typeGuardStrict, typeGuardWeak } from '../src/typeguard.js';
+import { assert, is, isStrict, isWeak, typeGuard, typeGuardStrict, typeGuardWeak } from '../src/typeguard.js';
 
 test('primitive string', () => {
     expect(is<string>('a')).toEqual(true);
@@ -768,4 +770,35 @@ test('precompiled guards check records with named properties', () => {
     expect(guard({ name: 'a', x: 1, y: 'b' })).toEqual(true);
     expect(guard({ name: 'a', x: true })).toEqual(false);
     expect(guard({ name: 1, x: 1 })).toEqual(false);
+});
+
+test('assert() keeps honouring validators across repeated calls', () => {
+    // assert() caches whether a type carries validators on its JIT container;
+    // the cached answer must match the uncached one on every call.
+    interface Constrained {
+        name: string & MinLength<3>;
+        nested: { count: number & Positive };
+    }
+    interface Plain {
+        name: string;
+        nested: { count: number };
+    }
+
+    const castConstrained = castFunction<Constrained>();
+    const castPlain = castFunction<Plain>();
+
+    for (let i = 0; i < 3; i++) {
+        expect(() => assert<Constrained>({ name: 'Alice', nested: { count: 1 } })).not.toThrow();
+        expect(() => assert<Constrained>({ name: 'Al', nested: { count: 1 } })).toThrow();
+        expect(() => assert<Constrained>({ name: 'Alice', nested: { count: -1 } })).toThrow();
+        expect(() => castConstrained({ name: 'Al', nested: { count: 1 } })).toThrow();
+        expect(castConstrained({ name: 'Alice', nested: { count: 1 } })).toEqual({ name: 'Alice', nested: { count: 1 } });
+
+        expect(() => assert<Plain>({ name: 'Al', nested: { count: -1 } })).not.toThrow();
+        expect(() => assert<Plain>({ name: 1, nested: { count: -1 } })).toThrow();
+        expect(castPlain({ name: 'Al', nested: { count: -1 }, extra: true })).toEqual({ name: 'Al', nested: { count: -1 } });
+    }
+
+    clearTypeJitContainer(typeOf<Constrained>());
+    expect(() => assert<Constrained>({ name: 'Al', nested: { count: 1 } })).toThrow();
 });
